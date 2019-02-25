@@ -2,6 +2,7 @@
 
 namespace Activity\Interfaces\Facades;
 
+use Activity\Factory;
 use Illuminate\Support\Facades\Facade;
 
 class OrderActivity extends Facade
@@ -13,6 +14,6 @@ class OrderActivity extends Facade
      */
     protected static function getFacadeAccessor()
     {
-        return 'OrderActivity';
+        return Factory::class;
     }
 }

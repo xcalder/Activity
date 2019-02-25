@@ -3,9 +3,17 @@
 namespace Activity;
 
 use Illuminate\Support\ServiceProvider;
+use Activity\Interfaces\Facades\ProductActivity;
 
 class ProductActivityServiceProvider extends ServiceProvider
 {
+    /**
+     * Indicates if loading of the provider is deferred.
+     *
+     * @var bool
+     */
+    protected $defer = true;
+    
     /**
      * Register any application services.
      *
@@ -14,5 +22,8 @@ class ProductActivityServiceProvider extends ServiceProvider
     public function register()
     {
         //
+        $this->app->singleton(ProductActivity::class, function ($app) {
+            return new ProductActivity();
+        });
     }
 }
