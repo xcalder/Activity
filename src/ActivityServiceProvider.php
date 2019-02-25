@@ -13,6 +13,13 @@ class ActivityServiceProvider extends ServiceProvider
      * @var bool
      */
     protected $defer = true;
+    
+    /*
+    public function boot()
+    {
+        $this->loadMigrationsFrom(__DIR__.'/../migrate');
+    }
+    */
 
     /**
      * Register the service provider.
