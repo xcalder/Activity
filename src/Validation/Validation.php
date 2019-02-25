@@ -1,0 +1,26 @@
+<?php
+
+namespace Activity;
+
+use Illuminate\Support\Facades\Validator;
+
+class Validation
+{
+    /**
+     * Create a new Validation instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        //
+    }
+    
+    public function return($request, $rules){
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            return $validator->errors();
+        }
+        return false;
+    }
+}

@@ -13,7 +13,7 @@ class ProductActivityIncrEasePriceRedemption implements ActivityInterface
      * 新建活动
      */
     public static function addActivity($request){
-        
+        echo '1<br/>';
     }
     
     /**
