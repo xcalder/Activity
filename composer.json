@@ -1,0 +1,9 @@
+{
+    "name"  : "actitivy",
+    "type"  : "library",
+    "homepage": "https://teaarthub.com",
+    "license" : "MIT",
+    "autoload": {
+        "psr-4": {"Actitivy\\": "src/"}
+    }
+}
