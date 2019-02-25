@@ -33,6 +33,6 @@ class ActivityServiceProvider extends ServiceProvider
      */
     public function provides()
     {
-        return [OrderFactory::class];
+        return [Factory::class];
     }
 }
