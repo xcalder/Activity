@@ -4,6 +4,6 @@
     "homepage": "https://teaarthub.com",
     "license" : "MIT",
     "autoload": {
-        "psr-4": {"Actitivy\\": "src/"}
+        "psr-4": {"Activity\\": "src/"}
     }
 }
