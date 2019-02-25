@@ -2,14 +2,12 @@
 
 namespace Activity;
 
-use Activity\Interfaces\ProductActivityInterface;
-
 /**
  * 加价购方法类
  * @author xcalder
  *
  */
-class ProductActivityIncrEasePriceRedemption implements ProductActivityInterface
+class ProductActivityIncrEasePriceRedemption implements ActivityInterface
 {
     /**
      * 新建活动

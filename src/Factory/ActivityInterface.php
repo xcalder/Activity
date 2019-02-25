@@ -1,14 +1,14 @@
 <?php
 
-namespace Activity\Interfaces;
+namespace Activity;
 
 /**
- * 商品级活动接口
- * 所有的商品活动实现此接口，并在业务逻辑中实例化
+ * 订单活动接口
+ * 所有的订单活动实现此接口，并在业务逻辑中实例化
  * @author xcalder
  *
  */
-interface ProductActivityInterface
+interface ActivityInterface
 {
     /**
      * 新建活动
@@ -34,11 +34,6 @@ interface ProductActivityInterface
      * 查活动详情
      */
     public static function getActivity($request);
-    
-    /**
-     * 用商品id查活动商品
-     */
-    public static function getActivityProducts($request);
     
     /**
      * 验证活动状态/优惠条件是否满足

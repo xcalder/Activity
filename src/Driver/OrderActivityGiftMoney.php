@@ -2,14 +2,12 @@
 
 namespace Activity;
 
-use Activity\Interfaces\ProductActivityInterface;
-
 /**
- * 限时折扣方法类
+ * 红包活动接口
  * @author xcalder
  *
  */
-class ProductActivityLimitDiscounts implements ProductActivityInterface
+class OrderActivityGiftMoney implements ActivityInterface
 {
     /**
      * 新建活动
@@ -43,13 +41,6 @@ class ProductActivityLimitDiscounts implements ProductActivityInterface
      * 查活动详情
      */
     public static function getActivity($request){
-        
-    }
-    
-    /**
-     * 用商品id查活动商品
-     */
-    public static function getActivityProducts($request){
         
     }
     

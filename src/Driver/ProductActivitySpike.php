@@ -2,14 +2,12 @@
 
 namespace Activity;
 
-use Activity\Interfaces\OrderActivityInterface;
-
 /**
- * 红包活动接口
+ * 秒杀方法类
  * @author xcalder
  *
  */
-class OrderActivityGiftMoney implements OrderActivityInterface
+class ProductActivitySpike implements ActivityInterface
 {
     /**
      * 新建活动
@@ -43,6 +41,13 @@ class OrderActivityGiftMoney implements OrderActivityInterface
      * 查活动详情
      */
     public static function getActivity($request){
+        
+    }
+    
+    /**
+     * 用商品id查活动商品
+     */
+    public static function getActivityProducts($request){
         
     }
     

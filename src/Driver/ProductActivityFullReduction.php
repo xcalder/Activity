@@ -2,14 +2,12 @@
 
 namespace Activity;
 
-use Activity\Interfaces\OrderActivityInterface;
-
 /**
- * 代金券活动接口
+ * 满减方法类
  * @author xcalder
  *
  */
-class OrderActivityVoucher implements OrderActivityInterface
+class ProductActivityFullReduction implements ActivityInterface
 {
     /**
      * 新建活动
@@ -43,6 +41,13 @@ class OrderActivityVoucher implements OrderActivityInterface
      * 查活动详情
      */
     public static function getActivity($request){
+        
+    }
+    
+    /**
+     * 用商品id查活动商品
+     */
+    public static function getActivityProducts($request){
         
     }
     

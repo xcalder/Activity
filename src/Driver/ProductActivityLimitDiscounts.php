@@ -1,15 +1,13 @@
 <?php
 
-namespace App\Activity;
-
-use Activity\Interfaces\ProductActivityInterface;
+namespace Activity;
 
 /**
- * 满送方法类
+ * 限时折扣方法类
  * @author xcalder
  *
  */
-class ProductActivityFullDelivery implements ProductActivityInterface
+class ProductActivityLimitDiscounts implements ActivityInterface
 {
     /**
      * 新建活动

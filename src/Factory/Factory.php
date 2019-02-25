@@ -1,6 +1,6 @@
 <?php
 
-namespace Activity;
+namespace Activity\Factory;
 
 interface Factory
 {

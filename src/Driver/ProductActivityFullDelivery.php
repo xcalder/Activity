@@ -2,14 +2,12 @@
 
 namespace Activity;
 
-use Activity\Interfaces\ProductActivityInterface;
-
 /**
- * 满减方法类
+ * 满送方法类
  * @author xcalder
  *
  */
-class ProductActivityFullReduction implements ProductActivityInterface
+class ProductActivityFullDelivery implements ActivityInterface
 {
     /**
      * 新建活动
