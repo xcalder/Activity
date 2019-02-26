@@ -44,6 +44,11 @@ class OrderActivityGiftMoney implements ActivityInterface
                             <input type="text" class="form-control" id="limit" placeholder="使用条件" value="0.00">
                             <p>可使用的最低订单总金额</p>
                           </div>
+                          <div class="form-group">
+                            <label for="limit">红包面额</label>
+                            <input type="text" class="form-control" id="limit" placeholder="使用条件" value="0.00">
+                            <p>每个红包可抵扣总价的金额</p>
+                          </div>
                           <button type="submit" class="btn btn-default">提交</button>
                         </div>
                       <div class="col-md-6">

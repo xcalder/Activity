@@ -34,13 +34,6 @@ class OrderActivityFullDelivery implements ActivityInterface
                 <form>
                     <div class="row">
                         <div class="col-md-6">
-                          <!--
-                          <div class="form-group">
-                            <label for="total">发放总数</label>
-                            <input type="text" class="form-control" id="total" placeholder="发放总数" value="0">
-                            <p>可领取的总数量</p>
-                          </div>
-                          -->
                           <div class="form-group">
                             <label for="limit">使用条件</label>
                             <input type="text" class="form-control" id="limit" placeholder="使用条件" value="0.00">
