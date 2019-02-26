@@ -8,6 +8,16 @@ use Activity\Factory\Factory;
 class ActivityServiceProvider extends ServiceProvider
 {
     /**
+     * Perform post-registration booting of services.
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        $this->loadRoutesFrom(__DIR__.'/routes/routes.php');
+    }
+    
+    /**
      * Indicates if loading of the provider is deferred.
      *
      * @var bool

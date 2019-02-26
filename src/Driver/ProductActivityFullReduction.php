@@ -10,13 +10,6 @@ namespace Activity;
 class ProductActivityFullReduction implements ActivityInterface
 {
     /**
-     * 新建活动
-     */
-    public static function addActivity($request){
-        echo '1<br/>';
-    }
-    
-    /**
      * 删除活动
      */
     public static function delActivity($request){

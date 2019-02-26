@@ -23,9 +23,19 @@ class ActivityManager extends Manager implements Factory
         return $this->buildProvider(OrderActivityGiftMoney::class);
     }
     
+    protected function createProductActivityGiftMoneyDriver()
+    {
+        return $this->buildProvider(ProductActivityGiftMoney::class);
+    }
+    
     protected function createOrderActivityVoucherDriver()
     {
         return $this->buildProvider(OrderActivityVoucher::class);
+    }
+    
+    protected function createProductActivityVoucherDriver()
+    {
+        return $this->buildProvider(ProductActivityVoucher::class);
     }
     
     protected function createProductActivitySpikeDriver()
@@ -51,6 +61,21 @@ class ActivityManager extends Manager implements Factory
     protected function createProductActivityLimitDiscountsDriver()
     {
         return $this->buildProvider(ProductActivityLimitDiscounts::class);
+    }
+    
+    protected function createOrderActivityFullDeliveryDriver()
+    {
+        return $this->buildProvider(OrderActivityFullDelivery::class);
+    }
+    
+    protected function createOrderActivityFullReductionDriver()
+    {
+        return $this->buildProvider(OrderActivityFullReduction::class);
+    }
+    
+    protected function createOrderActivityIncrEasePriceRedemptionDriver()
+    {
+        return $this->buildProvider(OrderActivityIncrEasePriceRedemption::class);
     }
     
     public function buildProvider($provider)

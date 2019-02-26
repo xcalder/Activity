@@ -3,11 +3,11 @@
 namespace Activity;
 
 /**
- * 代金券活动接口
+ * 满送方法类
  * @author xcalder
  *
  */
-class OrderActivityVoucher implements ActivityInterface
+class OrderActivityFullDelivery implements ActivityInterface
 {
     /**
      * 删除活动
@@ -34,6 +34,13 @@ class OrderActivityVoucher implements ActivityInterface
      * 查活动详情
      */
     public static function getActivity($request){
+        
+    }
+    
+    /**
+     * 用商品id查活动商品
+     */
+    public static function getActivityProducts($request){
         
     }
     

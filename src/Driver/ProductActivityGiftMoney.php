@@ -3,11 +3,11 @@
 namespace Activity;
 
 /**
- * 代金券活动接口
+ * 红包活动接口
  * @author xcalder
  *
  */
-class OrderActivityVoucher implements ActivityInterface
+class ProductActivityGiftMoney implements ActivityInterface
 {
     /**
      * 删除活动

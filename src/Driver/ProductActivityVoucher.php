@@ -7,7 +7,7 @@ namespace Activity;
  * @author xcalder
  *
  */
-class OrderActivityVoucher implements ActivityInterface
+class ProductActivityVoucher implements ActivityInterface
 {
     /**
      * 删除活动

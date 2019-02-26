@@ -11,11 +11,6 @@ namespace Activity;
 interface ActivityInterface
 {
     /**
-     * 新建活动
-     */
-    public static function addActivity($request);
-    
-    /**
      * 删除活动
      */
     public static function delActivity($request);

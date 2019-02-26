@@ -16,6 +16,21 @@ class Validation
         //
     }
     
+    public function addActivity($request, $rules){
+        $rules = [
+            'api_token' => 'required',
+            'type' => 'required',
+            'title' => 'required',
+            'description' => 'required',
+            'tag' => 'required',
+            'tag_img' => 'required',
+            'status' => 'required',
+            'stared_at' => 'required',
+            'ended_at' => 'required'
+        ];
+        return $this->return($request, $rules);
+    }
+    
     public function return($request, $rules){
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
