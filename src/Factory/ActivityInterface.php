@@ -21,9 +21,9 @@ interface ActivityInterface
     public static function editActivity($request);
     
     /**
-     * 查活动列表
+     * 返回当前活动管理的表单
      */
-    public static function getActivitys($request);
+    public static function getManagetForm($request);
     
     /**
      * 查活动详情

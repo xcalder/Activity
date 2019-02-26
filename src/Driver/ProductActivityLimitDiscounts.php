@@ -24,10 +24,47 @@ class ProductActivityLimitDiscounts implements ActivityInterface
     }
     
     /**
-     * 查活动列表
+     * 返回当前活动管理表单
      */
-    public static function getActivitys($request){
-        
+    public static function getManagetForm($request){
+        echo <<<ETO
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content p-3">
+                <h4>商品列表</h4>
+                <form>
+                    <table class="table product-activity-limit-discounts">
+                        <thead><tr><td><input type="checkbox"></td><td>商品名</td><td>规格</td><td>成本价</td><td>售价</td><td>真实库存</td><td>销售库存</td><td>活动库存</td></tr></thead>
+                        <tbody></tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="10"><input type="checkbox"><span>全选</span><span>提交</span><span>删除</span></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </form>
+            </div>
+        </div>
+        <script type="text/javascript">
+            $(document).ready(function () {
+                $.ajax({
+            	    type: 'GET',
+            	    url: url+'/api/role/get_roles',
+            	    data: {api_token: api_token, set_price:1},
+            	    dataType: 'json',
+            	    success: function(data){
+            	    	if(data.status){
+                            var html = '';
+                            for(var i in data.data.data){
+                                var role = data.data.data[i];
+                                html += '<td colspan="2">'+role.name+'</td>';
+                            }
+                            $('.product-activity-limit-discounts thead tr').append(html);
+                        }
+                    }
+                });
+            })
+        </script>
+ETO;
     }
     
     /**

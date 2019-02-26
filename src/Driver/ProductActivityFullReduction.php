@@ -24,10 +24,65 @@ class ProductActivityFullReduction implements ActivityInterface
     }
     
     /**
-     * 查活动列表
+     * 返回当前活动管理表单
      */
-    public static function getActivitys($request){
-        
+    public static function getManagetForm($request){
+        echo <<<ETO
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content p-3">
+                <form>
+                    <div class="row">
+                        <div class="col-md-6">
+                          <h4>商品满减管理</h4>
+                          <!--
+                          <div class="form-group">
+                            <label for="total">发放总数</label>
+                            <input type="text" class="form-control" id="total" placeholder="发放总数" value="0">
+                            <p>可领取的总数量</p>
+                          </div>
+                          -->
+                          <div class="form-group">
+                            <label for="limit">使用条件</label>
+                            <input type="text" class="form-control" id="limit" placeholder="使用条件" value="0.00">
+                            <p>可使用的最低订单总金额</p>
+                          </div>
+                          <div class="form-group">
+                            <label for="limit" class="btn-block">可使用的角色</label>
+                            <div class="allowed-role mb-3"></div>
+                            <p>指定勾选的角色可以领取并使用</p>
+                          </div>
+                          <button type="submit" class="btn btn-default">提交</button>
+                        </div>
+                      <div class="col-md-6">
+                           <h4>商品列表</h4>
+                      </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <script type="text/javascript">
+            $(document).ready(function () {
+                $.ajax({
+            	    type: 'GET',
+            	    url: url+'/api/role/get_roles',
+            	    data: {api_token: api_token, set_price:1},
+            	    dataType: 'json',
+            	    success: function(data){
+            	    	if(data.status){
+                            var html = '';
+                            for(var i in data.data.data){
+                                var role = data.data.data[i];
+                                html += '<label class="checkbox-inline">';
+                                html += '<input type="checkbox" value="'+role.id+'">'+role.name;
+                                html += '</label>';
+                            }
+                            $('.allowed-role').html(html);
+                        }
+                    }
+                });
+            })
+        </script>
+ETO;
     }
     
     /**

@@ -38,6 +38,11 @@ class ActivityManager extends Manager implements Factory
         return $this->buildProvider(ProductActivityVoucher::class);
     }
     
+    protected function createProductActivityGiftVoucherDriver()
+    {
+        return $this->buildProvider(ProductActivityGiftVoucher::class);
+    }
+    
     protected function createProductActivitySpikeDriver()
     {
         return $this->buildProvider(ProductActivitySpike::class);

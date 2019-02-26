@@ -16,17 +16,38 @@ class Validation
         //
     }
     
-    public function addActivity($request, $rules){
+    public function addActivity($request){
         $rules = [
             'api_token' => 'required',
-            'type' => 'required',
             'title' => 'required',
             'description' => 'required',
             'tag' => 'required',
             'tag_img' => 'required',
-            'status' => 'required',
-            'stared_at' => 'required',
+            'started_at' => 'required',
             'ended_at' => 'required'
+        ];
+        if(empty($request->input('id'))){
+            $rules['type'] = 'required';
+            $rules['status'] = 'required';
+        }
+        if($request->has('id')){
+            $rules['id'] = 'required';
+        }
+        return $this->return($request, $rules);
+    }
+    
+    public function ActivitysForType($request){
+        $rules = [
+            'api_token' => 'required',
+            'type' => 'required'
+        ];
+        return $this->return($request, $rules);
+    }
+    
+    public function getActivity($request){
+        $rules = [
+            'api_token' => 'required',
+            'id' => 'required'
         ];
         return $this->return($request, $rules);
     }

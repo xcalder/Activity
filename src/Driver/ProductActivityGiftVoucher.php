@@ -3,11 +3,11 @@
 namespace Activity;
 
 /**
- * 加价购方法类
+ * 单品赠券活动接口
  * @author xcalder
  *
  */
-class OrderActivityIncrEasePriceRedemption implements ActivityInterface
+class ProductActivityGiftVoucher implements ActivityInterface
 {
     /**
      * 删除活动
@@ -33,14 +33,12 @@ class OrderActivityIncrEasePriceRedemption implements ActivityInterface
                 <form>
                     <div class="row">
                         <div class="col-md-6">
-                          <h4>订单加价购管理</h4>
-                          <!--
+                          <h4>商品赠送代金券管理</h4>
                           <div class="form-group">
                             <label for="total">发放总数</label>
                             <input type="text" class="form-control" id="total" placeholder="发放总数" value="0">
                             <p>可领取的总数量</p>
                           </div>
-                          -->
                           <div class="form-group">
                             <label for="limit">使用条件</label>
                             <input type="text" class="form-control" id="limit" placeholder="使用条件" value="0.00">
@@ -89,13 +87,6 @@ ETO;
      * 查活动详情
      */
     public static function getActivity($request){
-        
-    }
-    
-    /**
-     * 用商品id查活动商品
-     */
-    public static function getActivityProducts($request){
         
     }
     
