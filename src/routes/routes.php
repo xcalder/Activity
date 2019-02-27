@@ -9,30 +9,45 @@ Route::group(['prefix' => 'api'], function($router){
             'uses' => 'Activity\IndexController@getActivitysForType',
             'description' => '根据活动类型取活动，包括详情'
         ]);
-        $router->get('get_activity', [
+        $router->get('get_activity_rule_list', [
             'group' => 'activity',
-            'uses' => 'Activity\IndexController@getActivity',
-            'description' => '用Id取活动'
+            'uses' => 'Activity\IndexController@getActivityRuleList',
+            'description' => '用Id取活动规则列表'
+        ]);
+        $router->delete('del_activity_rule', [
+            'group' => 'activity',
+            'uses' => 'Activity\IndexController@delActivityRule',
+            'description' => '用Id删除一个活动规则'
         ]);
         $router->get('get_activity_manager_form', [
             'group' => 'activity',
             'uses' => 'Activity\IndexController@getActivityManagerForm',
-            'description' => '用Id取活动管理详情表单'
+            'description' => '用Id取活动管理表单'
+        ]);
+        $router->get('get_activity_rule_products', [
+            'group' => 'activity',
+            'uses' => 'Activity\IndexController@getActivityRuleProducts',
+            'description' => '用rule_id取活动规则下的商品//已加入活动'
         ]);
         $router->post('add_activity', [
             'group' => 'activity',
             'uses' => 'Activity\IndexController@addActivity',
             'description' => '添加活动'
         ]);
+        $router->post('add_product_to_activity_rule', [
+            'group' => 'activity',
+            'uses' => 'Activity\IndexController@addProductToActivityRule',
+            'description' => '添加商品到活动规则'
+        ]);
+        $router->post('add_activity_rules', [
+            'group' => 'activity',
+            'uses' => 'Activity\IndexController@addActivityRule',
+            'description' => '添加活动规则'
+        ]);
         $router->delete('del_activity', [
             'group' => 'activity',
             'uses' => 'Activity\IndexController@delActivity',
             'description' => '删除活动'
-        ]);
-        $router->put('edit_activity', [
-            'group' => 'activity',
-            'uses' => 'Activity\IndexController@editActivity',
-            'description' => '修改活动'
         ]);
         $router->post('checkout_activity', [
             'group' => 'activity',

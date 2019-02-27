@@ -12,6 +12,53 @@ use Activity\Facades\Activity;
 class IndexController extends BaseController
 {
     /**
+     * 用id取活动规则列表
+     * @param Request $request
+     */
+    public function getActivityRuleList(Request $request){
+        $driver = $this->getDriver($request);
+        if(!$driver){
+            return response()->json(['status' => false]);
+        }
+        return Activity::with($driver)->getActivityRule($request);
+    }
+    
+    /**
+     * 添加商品到活动规则
+     * @param Request $request
+     */
+    public function addProductToActivityRule(Request $request){
+        $driver = $this->getDriver($request);
+        if(!$driver){
+            return response()->json(['status' => false]);
+        }
+        return Activity::with($driver)->addActivityProduct($request);
+    }
+    
+    /**
+     * 用id删除一个活动规则
+     * @param Request $request
+     */
+    public function delActivityRule(Request $request){
+        $driver = $this->getDriver($request);
+        if(!$driver){
+            return response()->json(['status' => false]);
+        }
+        return Activity::with($driver)->delActivityRule($request);
+    }
+    
+    /**
+     * 添加一个活动规则
+     * @param Request $request
+     */
+    public function addActivityRule(Request $request){
+        $driver = $this->getDriver($request);
+        if(!$driver){
+            return response()->json(['status' => false]);
+        }
+        return Activity::with($driver)->addActivityRule($request);
+    }
+    /**
      * 根据类型取活动
      * @param Request $request
      */
@@ -52,6 +99,18 @@ class IndexController extends BaseController
         }
         
         return response()->json($data);
+    }
+    
+    /**
+     * 用rule_id 取活动规则下的商品
+     * @param Request $request
+     */
+    public function getActivityRuleProducts(Request $request){
+        $driver = $this->getDriver($request);
+        if(!$driver){
+            return response()->json(['status' => false]);
+        }
+        return Activity::with($driver)->getActivityProducts($request);
     }
     
     /**
@@ -153,14 +212,6 @@ class IndexController extends BaseController
     }
     
     /**
-     * 修改活动详情
-     * @param Request $request
-     */
-    public function editActivity(Request $request){
-        
-    }
-    
-    /**
      * 验证订单是否满足活动
      * @param Request $request
      */
@@ -181,36 +232,11 @@ class IndexController extends BaseController
     }
     
     public function getActivityManagerForm(Request $request){
-        $data = [];
-        $data['status'] =  false;
-        
-        $validation = new Validation();
-        $result = $validation->getActivity($request);
-        if ($result) {
-            $data['error'] = $result;
-            return response()->json($data);
+        $driver = $this->getDriver($request);
+        if(!$driver){
+            return response()->json(['status' => false]);
         }
-        
-        $width = $request->input('width', 36);
-        $height = $request->input('height', 36);
-        
-        $user = Auth::user();
-        $user_id = $user['id'];
-        $store_id = $user['store_id'] ?? 0;
-        
-        $result = ProductActivity::where('id', $request->input('id'))->first();
-        if(empty($result)){
-            $data['error']['none'][0] = '没有找到要管理的活动';
-            return response()->json($data);
-        }
-        
-        $type = $result['type'];
-        $driver_config = $this->getConfigDriver();
-        if(empty($driver_config)){
-            $data['error']['none'][0] = '没有找到要管理的活动';
-            return response()->json($data);
-        }
-        Activity::with($driver_config[$type])->getManagetForm($request);
+        Activity::with($driver)->getManagetForm($request);
     }
     
     private function getConfigDriver(){
@@ -227,5 +253,27 @@ class IndexController extends BaseController
             }
         }
         return $data;
+    }
+    
+    private function getDriver($request){
+        $validation = new Validation();
+        $result = $validation->getActivity($request);
+        if ($result) {
+            return false;
+        }
+        
+        $id = $request->input('id');
+        
+        $result = ProductActivity::where('id', $id)->first();
+        if(empty($result)){
+            return false;
+        }
+        
+        $type = $result['type'];
+        $driver_config = $this->getConfigDriver();
+        if(empty($driver_config)){
+            return false;
+        }
+        return $driver_config[$type];
     }
 }

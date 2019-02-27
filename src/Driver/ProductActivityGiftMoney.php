@@ -10,16 +10,45 @@ namespace Activity;
 class ProductActivityGiftMoney implements ActivityInterface
 {
     /**
-     * 删除活动
+     * 添加规则
      */
-    public static function delActivity($request){
+    public static function addActivityRule($request){
         
     }
     
     /**
-     * 修改活动
+     * 用id取活动规则
+     * @param unknown $request
      */
-    public static function editActivity($request){
+    public static function getActivityRule($request){
+        
+    }
+    
+    /**
+     * 删除规则
+     */
+    public static function delActivityRule($request){
+        
+    }
+    
+    /**
+     * 添加商品
+     */
+    public static function addActivityProduct($request){
+        
+    }
+    
+    /**
+     * 删除商品
+     */
+    public static function delActivityProduct($request){
+        
+    }
+    
+    /**
+     * 领取活动日志
+     */
+    public static function receiveActivityLog($request){
         
     }
     
