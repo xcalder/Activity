@@ -23,6 +23,14 @@ class IndexController extends BaseController
         return Activity::with($driver)->getActivityRule($request);
     }
     
+    public function delRulesProduct(Request $request){
+        $driver = $this->getDriver($request);
+        if(!$driver){
+            return response()->json(['status' => false]);
+        }
+        return Activity::with($driver)->delActivityProduct($request);
+    }
+    
     /**
      * 添加商品到活动规则
      * @param Request $request

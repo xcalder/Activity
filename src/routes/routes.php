@@ -29,6 +29,11 @@ Route::group(['prefix' => 'api'], function($router){
             'uses' => 'Activity\IndexController@getActivityRuleProducts',
             'description' => '用rule_id取活动规则下的商品//已加入活动'
         ]);
+        $router->post('del_product_to_activity_rule', [
+            'group' => 'activity',
+            'uses' => 'Activity\IndexController@delRulesProduct',
+            'description' => '删除已加入活动的商品'
+        ]);
         $router->post('add_activity', [
             'group' => 'activity',
             'uses' => 'Activity\IndexController@addActivity',
