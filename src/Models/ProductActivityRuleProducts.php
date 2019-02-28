@@ -29,4 +29,9 @@ class ProductActivityRuleProducts extends Model
     {
         return $this->hasMany('Activity\Models\ProductActivityRuleRoles', 'activity_rules_id', 'id');
     }
+    
+    public function rolesPrice()
+    {
+        return $this->hasMany('Activity\Models\ProductActivityRuleRoles', 'product_specification_value_to_product_id', 'product_specification_value_to_product_id');
+    }
 }

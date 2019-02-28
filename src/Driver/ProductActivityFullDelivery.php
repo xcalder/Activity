@@ -3,9 +3,9 @@
 namespace Activity;
 
 use Illuminate\Support\Facades\DB;
+use Activity\Models\ProductActivity;
 use Activity\Models\ProductActivityRules;
 use Activity\Models\ProductActivityRuleRoles;
-use Activity\Models\ProductActivity;
 use Activity\Models\ProductActivityRuleProducts;
 use App\Service\ToolsService;
 
@@ -43,6 +43,11 @@ class ProductActivityFullDelivery implements ActivityInterface
         
         DB::beginTransaction();
         try{
+            $activity_info = ProductActivity::where('id', $id)->first();
+            if(empty($activity_info)){
+                return response()->json($data);
+            }
+            $insert['status'] = $activity_info['status'];
             $activity_rules_id = ProductActivityRules::insertGetId($insert);
             $insert_role = [];
             $i = 0;
@@ -111,6 +116,7 @@ class ProductActivityFullDelivery implements ActivityInterface
         try{
             ProductActivityRules::where('id', $rule_id)->where('activity_id', $id)->delete();
             ProductActivityRuleRoles::where('activity_id', $id)->where('activity_rules_id', $rule_id)->delete();
+            ProductActivityRuleProducts::where('activity_id', $id)->where('activity_rules_id', $rule_id)->delete();
             $data['status'] = true;
             DB::commit();
         }catch (\Exception $e) {
@@ -129,7 +135,8 @@ class ProductActivityFullDelivery implements ActivityInterface
         $rules = [
             'id' => 'required',
             'rule_id' => 'required',
-            'activity_id' => 'required'
+            'activity_id' => 'required',
+            'type' => 'required'
         ];
         $validation = new Validation();
         $result = $validation->return($request, $rules);
@@ -138,23 +145,44 @@ class ProductActivityFullDelivery implements ActivityInterface
             return response()->json($data);
         }
         
+        $type = $request->input('type');
         $rule_id = $request->input('rule_id');
         $activity_id = $request->input('activity_id');
         $rules_products = $request->input('rules_products');
         $products = [];
         $i = 0;
+        
+        $id = $request->input('id');
+        $activity_info = ProductActivity::where('id', $id)->first();
+        if(empty($activity_info)){
+            return response()->json($data);
+        }
+        
         foreach ($rules_products as $key=>$value){
             if(isset($value['product_id'])){
                 $products[$i]['product_id'] = $value['product_id'];
                 $products[$i]['product_specification_value_to_product_id'] = $value['product_specification_value_to_product_id'];
                 $products[$i]['activity_id'] = $activity_id;
                 $products[$i]['activity_rules_id'] = $rule_id;
+                $products[$i]['status'] = $activity_info['status'];
+                $products[$i]['type'] = $type;
                 $i++;
             }
         }
         
-        if(ProductActivityRuleProducts::insert($products)){
+        DB::beginTransaction();
+        try{
+            //先删除相同商品
+            $products_specification_value_to_product_id = lumen_array_column($products, 'product_specification_value_to_product_id');
+            ProductActivityRuleProducts::where('activity_id', $id)->where('activity_rules_id', $rule_id)->whereIn('product_specification_value_to_product_id', $products_specification_value_to_product_id)->delete();
+            
+            ProductActivityRuleProducts::insert($products);
+            $data['type'] = $type;
+            $data['rule_id'] = $rule_id;
             $data['status'] = true;
+            DB::commit();
+        }catch (\Exception $e) {
+            DB::rollBack();
         }
         
         return response()->json($data);
@@ -184,13 +212,15 @@ class ProductActivityFullDelivery implements ActivityInterface
             }
         }
         if(!empty($roles_products)){
+            $type = $request->input('type');
             $activity_id = $request->input('id');
             $activity_rule_id = lumen_array_column($roles_products, 'rule_id')[0];
             $product_id = lumen_array_column($roles_products, 'product_id');
             $product_specification_value_to_product_id = lumen_array_column($roles_products, 'product_specification_value_to_product_id');
-            if(ProductActivityRuleProducts::where('activity_id', $activity_id)->where('activity_rules_id', $activity_rule_id)->whereIn('product_specification_value_to_product_id', $product_specification_value_to_product_id)->delete()){
+            if(ProductActivityRuleProducts::where('type', $type)->where('activity_id', $activity_id)->where('activity_rules_id', $activity_rule_id)->whereIn('product_specification_value_to_product_id', $product_specification_value_to_product_id)->delete()){
                 $data['status'] = true;
                 $data['rule_id'] = $activity_rule_id;
+                $data['type'] = $type;
             }
         }
         return $data;
@@ -215,7 +245,7 @@ class ProductActivityFullDelivery implements ActivityInterface
         echo <<<ETO
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content p-3">
-                <h4>商品满送管理</h4>
+                <h4>单品满送管理</h4>
                     <div class="row">
                         <table class="table mb-0">
                             <thead>
@@ -254,13 +284,13 @@ class ProductActivityFullDelivery implements ActivityInterface
         <div class="modal fade manager-activity-products" tabindex="-1" role="dialog">
           <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content p-3" style="min-height: 600px">
-                <h4>活动商品管理</h4>
+                <h4>商品管理</h4>
                 <form id="product-search-form" method="get" enctype="multipart/form-data" action="$action_product_search_form">
                     <table class="table product-list"><tbody><tr><td>分类</td><td><select class="form-control" name="category_id"></select></td><td>品牌</td><td><select class="form-control" name="brand_id"></select></td><td>标题</td><td><input name="keyword" class="form-control" type="text"></td><td><button type="submit" class="btn btn-default">搜索</button></td></tr></tbody></table>
                 </form>
                 <!-- Nav tabs -->
                   <ul class="nav nav-tabs" role="tablist">
-                    <li role="presentation" class="active"><a href="#joined" aria-controls="joined" role="tab" data-toggle="tab">已加入</a></li>
+                    <li role="presentation" class="active"><a href="#joined" aria-controls="joined" role="tab" data-toggle="tab" >已加入</a></li>
                     <li role="presentation"><a href="#not-joined" aria-controls="not-joined" role="tab" data-toggle="tab">未加入</a></li>
                   </ul>
                 
@@ -270,6 +300,7 @@ class ProductActivityFullDelivery implements ActivityInterface
                         <form id="unjoined-form" action="$action_del_product_to_rule" method="post" enctype="multipart/form-data">
                             <input type="hidden" name="api_token" value="$api_token">
                             <input type="hidden" name="id" value="$id">
+                            <input type="hidden" name="type" value="">
                             <table class="table"><thead><tr><td><button class="btn btn-default btn-sm" type="submit">移出</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>商品名</td></tr></thead><tbody></tbody><tfoot></tfoot></table>
                         </form>
                     </div>
@@ -278,6 +309,7 @@ class ProductActivityFullDelivery implements ActivityInterface
                             <input type="hidden" name="api_token" value="$api_token">
                             <input type="hidden" name="activity_id" value="$id">
                             <input type="hidden" name="id" value="$id">
+                            <input type="hidden" name="type" value="">
                             <input type="hidden" name="rule_id" value="">
                             <table class="table"><thead><tr><td><button class="btn btn-default btn-sm" type="submit">加入</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>商品名</td></tr></thead><tbody></tbody><tfoot id="search-product-list-page"></tfoot></table>
                         </form>
@@ -331,7 +363,7 @@ class ProductActivityFullDelivery implements ActivityInterface
             function showResponseDelProductToRule(responseText, statusText){
             	var data = responseText;console.log(data);
             	if(data.status){
-                    getActivityRulesProducts(data.rule_id);
+                    getActivityRulesProducts(data.rule_id, data.type);
             		toastr.success('删除成功');
             	}else{
             		toastr.warning('删除失败');
@@ -437,7 +469,8 @@ class ProductActivityFullDelivery implements ActivityInterface
                                     html += '<td>';
                                     
                                     html += '<div class="btn-group" role="group">';
-                                    html += '<button type="button" class="btn btn-default" onclick="manager_activity_products('+rule.id+');">商品管理</button>';
+                                    html += '<button type="button" class="btn btn-default" onclick="manager_activity_products('+rule.id+', 1);">活动商品管理</button>';
+                                    html += '<button type="button" class="btn btn-default" onclick="manager_activity_products('+rule.id+', 2);">赠品管理</button>';
                                     html += '<button type="button" class="btn btn-default" onclick="delete_rule('+rule.id+');">删除</button>';
                                     html += '</div>';
 
@@ -468,24 +501,24 @@ class ProductActivityFullDelivery implements ActivityInterface
                     }
                 });
             }
-            
-            function manager_activity_products(rule_id){
+            function manager_activity_products(rule_id, type){
                 $('#add-rule-products input[name="rule_id"]').val(rule_id);
+                $('input[name="type"]').val(type);
                 $('.manager-activity-products').modal();
                 getBrand();
                 getCategory();
-                getActivityRulesProducts(rule_id);
+                getActivityRulesProducts(rule_id, type);
             }
 
-            function getActivityRulesProducts(rule_id){
+            function getActivityRulesProducts(rule_id, type){
+                var html = '';
                 $.ajax({
             	    type: 'GET',
             	    url: url+'/api/activity/get_activity_rule_products',
-            	    data: {api_token: api_token,rule_id:rule_id,id:$id},
+            	    data: {api_token: api_token,rule_id:rule_id,id:$id,type:type},
             	    dataType: 'json',
             	    success: function(data){
             	    	if(data.status){
-                            var html = '';
                             var products = data.data.data;
                             for(var i in products){
                                 var product = products[i];
@@ -495,9 +528,9 @@ class ProductActivityFullDelivery implements ActivityInterface
                                 }
                                 html += '</td><td><img src="'+product.thumb_img+'">'+product.title+'</td></tr>';
                             }
-                            $('#unjoined-form tbody').html(html);
                             pagination(data, '#unjoined-form tfoot', 3);
                         }
+                        $('#unjoined-form tbody').html(html);
                     }
                 });
             }
@@ -591,6 +624,7 @@ class ProductActivityFullDelivery implements ActivityInterface
             function showResponseAddRuleProduct(responseText, statusText){
             	var data = responseText;
                 if(data.status){
+                    getActivityRulesProducts(data.rule_id, data.type);
                     toastr.success('添加成功');
                 }else{
                     toastr.warning('添加失败');
@@ -608,7 +642,7 @@ ETO;
     }
     
     /**
-     * 用商品id查活动商品
+     * 用规则id查活动商品
      */
     public static function getActivityProducts($request){
         $data = [];
@@ -630,9 +664,11 @@ ETO;
         
         $rule_id = $request->input('rule_id');
         $activity_id = $request->input('id');
+        $type = $request->input('type');
+        
         $result = ProductActivityRuleProducts::join('product_version as pv', function($join){
             $join->on('pv.product_id', '=', 'product_activity_rule_products.product_id')->on('pv.product_specification_value_to_product_id', '=', 'product_activity_rule_products.product_specification_value_to_product_id');
-        })->where('activity_id', $activity_id)->where('activity_rules_id', $rule_id)->select(['pv.product_id', 'pv.title', 'pv.specification', 'pv.img', 'product_activity_rule_products.activity_id', 'product_activity_rule_products.activity_rules_id', 'product_activity_rule_products.product_specification_value_to_product_id'])->paginate(env('PAGE_LIMIT', 25))->toArray();
+        })->where('type', $type)->where('product_activity_rule_products.activity_id', $activity_id)->where('product_activity_rule_products.activity_rules_id', $rule_id)->select(['pv.product_id', 'pv.title', 'pv.specification', 'pv.img', 'product_activity_rule_products.activity_id', 'product_activity_rule_products.activity_rules_id', 'product_activity_rule_products.product_specification_value_to_product_id'])->paginate(env('PAGE_LIMIT', 25))->toArray();
         
         if(!empty($result['data'])){
             $data['status'] = true;

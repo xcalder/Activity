@@ -4,6 +4,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::group(['prefix' => 'api'], function($router){
     $router->group(['prefix' => 'activity'], function($router){
+        $router->get('get_activity', [
+            'group' => 'activity',
+            'uses' => 'Activity\IndexController@getActivity',
+            'description' => '用Id取活动'
+        ]);
         $router->get('get_activitys_for_type', [
             'group' => 'activity',
             'uses' => 'Activity\IndexController@getActivitysForType',

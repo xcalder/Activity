@@ -5,9 +5,9 @@ namespace Activity;
 use Illuminate\Support\Facades\DB;
 use Activity\Models\ProductActivityRules;
 use Activity\Models\ProductActivityRuleRoles;
-use Activity\Models\ProductActivity;
 use Activity\Models\ProductActivityRuleProducts;
 use App\Service\ToolsService;
+use Activity\Models\ProductActivity;
 
 /**
  * 满送方法类
@@ -43,6 +43,11 @@ class OrderActivityFullDelivery implements ActivityInterface
         
         DB::beginTransaction();
         try{
+            $activity_info = ProductActivity::where('id', $id)->first();
+            if(empty($activity_info)){
+                return response()->json($data);
+            }
+            $insert['status'] = $activity_info['status'];
             $activity_rules_id = ProductActivityRules::insertGetId($insert);
             $insert_role = [];
             $i = 0;
@@ -111,6 +116,7 @@ class OrderActivityFullDelivery implements ActivityInterface
         try{
             ProductActivityRules::where('id', $rule_id)->where('activity_id', $id)->delete();
             ProductActivityRuleRoles::where('activity_id', $id)->where('activity_rules_id', $rule_id)->delete();
+            ProductActivityRuleProducts::where('activity_id', $id)->where('activity_rules_id', $rule_id)->delete();
             $data['status'] = true;
             DB::commit();
         }catch (\Exception $e) {
@@ -143,18 +149,36 @@ class OrderActivityFullDelivery implements ActivityInterface
         $rules_products = $request->input('rules_products');
         $products = [];
         $i = 0;
+        
+        $id = $request->input('id');
+        $activity_info = ProductActivity::where('id', $id)->first();
+        if(empty($activity_info)){
+            return response()->json($data);
+        }
+        
         foreach ($rules_products as $key=>$value){
             if(isset($value['product_id'])){
                 $products[$i]['product_id'] = $value['product_id'];
                 $products[$i]['product_specification_value_to_product_id'] = $value['product_specification_value_to_product_id'];
                 $products[$i]['activity_id'] = $activity_id;
                 $products[$i]['activity_rules_id'] = $rule_id;
+                $products[$i]['status'] = $activity_info['status'];
                 $i++;
             }
         }
         
-        if(ProductActivityRuleProducts::insert($products)){
+        DB::beginTransaction();
+        try{
+            //先删除相同商品
+            $products_specification_value_to_product_id = lumen_array_column($products, 'product_specification_value_to_product_id');
+            ProductActivityRuleProducts::where('activity_id', $id)->where('activity_rules_id', $rule_id)->whereIn('product_specification_value_to_product_id', $products_specification_value_to_product_id)->delete();
+            
+            ProductActivityRuleProducts::insert($products);
+            $data['rule_id'] = $rule_id;
             $data['status'] = true;
+            DB::commit();
+        }catch (\Exception $e) {
+            DB::rollBack();
         }
         
         return response()->json($data);
@@ -260,7 +284,7 @@ class OrderActivityFullDelivery implements ActivityInterface
                 </form>
                 <!-- Nav tabs -->
                   <ul class="nav nav-tabs" role="tablist">
-                    <li role="presentation" class="active"><a href="#joined" aria-controls="joined" role="tab" data-toggle="tab">已加入</a></li>
+                    <li role="presentation" class="active"><a href="#joined" aria-controls="joined" role="tab" data-toggle="tab" >已加入</a></li>
                     <li role="presentation"><a href="#not-joined" aria-controls="not-joined" role="tab" data-toggle="tab">未加入</a></li>
                   </ul>
                 
@@ -478,6 +502,7 @@ class OrderActivityFullDelivery implements ActivityInterface
             }
 
             function getActivityRulesProducts(rule_id){
+                var html = '';
                 $.ajax({
             	    type: 'GET',
             	    url: url+'/api/activity/get_activity_rule_products',
@@ -485,7 +510,6 @@ class OrderActivityFullDelivery implements ActivityInterface
             	    dataType: 'json',
             	    success: function(data){
             	    	if(data.status){
-                            var html = '';
                             var products = data.data.data;
                             for(var i in products){
                                 var product = products[i];
@@ -495,9 +519,9 @@ class OrderActivityFullDelivery implements ActivityInterface
                                 }
                                 html += '</td><td><img src="'+product.thumb_img+'">'+product.title+'</td></tr>';
                             }
-                            $('#unjoined-form tbody').html(html);
                             pagination(data, '#unjoined-form tfoot', 3);
                         }
+                        $('#unjoined-form tbody').html(html);
                     }
                 });
             }
@@ -591,6 +615,7 @@ class OrderActivityFullDelivery implements ActivityInterface
             function showResponseAddRuleProduct(responseText, statusText){
             	var data = responseText;
                 if(data.status){
+                    getActivityRulesProducts(data.rule_id);
                     toastr.success('添加成功');
                 }else{
                     toastr.warning('添加失败');
@@ -608,7 +633,7 @@ ETO;
     }
     
     /**
-     * 用商品id查活动商品
+     * 用规则id查活动商品
      */
     public static function getActivityProducts($request){
         $data = [];
@@ -632,7 +657,7 @@ ETO;
         $activity_id = $request->input('id');
         $result = ProductActivityRuleProducts::join('product_version as pv', function($join){
             $join->on('pv.product_id', '=', 'product_activity_rule_products.product_id')->on('pv.product_specification_value_to_product_id', '=', 'product_activity_rule_products.product_specification_value_to_product_id');
-        })->where('activity_id', $activity_id)->where('activity_rules_id', $rule_id)->select(['pv.product_id', 'pv.title', 'pv.specification', 'pv.img', 'product_activity_rule_products.activity_id', 'product_activity_rule_products.activity_rules_id', 'product_activity_rule_products.product_specification_value_to_product_id'])->paginate(env('PAGE_LIMIT', 25))->toArray();
+        })->where('product_activity_rule_products.activity_id', $activity_id)->where('product_activity_rule_products.activity_rules_id', $rule_id)->select(['pv.product_id', 'pv.title', 'pv.specification', 'pv.img', 'product_activity_rule_products.activity_id', 'product_activity_rule_products.activity_rules_id', 'product_activity_rule_products.product_specification_value_to_product_id'])->paginate(env('PAGE_LIMIT', 25))->toArray();
         
         if(!empty($result['data'])){
             $data['status'] = true;

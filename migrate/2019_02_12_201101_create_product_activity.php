@@ -20,6 +20,7 @@ class CreateProductActivity extends Migration
             $table->string('tag', 32)->nullable();
             $table->string('tag_img')->nullable();
             $table->tinyInteger('status')->default(0);
+            $table->tinyInteger('type')->default(1);
             $table->bigInteger('store_id')->default(0);
             $table->bigInteger('category_id');
             $table->dateTime('started_at');
@@ -27,57 +28,37 @@ class CreateProductActivity extends Migration
             $table->timestamps();
         });
         
-        Schema::create('product_activity_products', function (Blueprint $table) {
+        Schema::create('product_activity_rules', function (Blueprint $table) {
             $table->increments('id');
             $table->bigInteger('activity_id');
-            $table->bigInteger('product_id');
-            $table->bigInteger('product_specification_value_to_product_id');
-            $table->bigInteger('storage');
-            $table->bigInteger('sales_volume')->default(0);
-            $table->bigInteger('activity_limit')->default(0);
-            $table->float('price', 11, 2);
+            $table->float('price', 11, 2)->default(0);
+            $table->float('limit', 11, 2)->default(0);
+            $table->bigInteger('total')->default(0);
+            $table->bigInteger('get_limit')->default(0);
+            $table->tinyInteger('status')->default(1);
         });
         
-        Schema::create('product_activity_products_gift_products', function (Blueprint $table) {
+        Schema::create('product_activity_rule_roles', function (Blueprint $table) {
             $table->increments('id');
             $table->bigInteger('activity_id');
-            $table->bigInteger('product_id');
-            $table->bigInteger('product_specification_value_to_product_id');
-            $table->bigInteger('storage');
-            $table->bigInteger('sales_volume')->default(0);
-            $table->bigInteger('activity_limit')->default(0);
-            $table->float('price', 11, 2);
-        });
-        
-        Schema::create('product_activity_products_role_price', function (Blueprint $table) {
-            $table->bigInteger('product_to_product_activity_id');
-            $table->bigInteger('product_specification_value_to_product_id');
+            $table->bigInteger('activity_rules_id')->default(0);
             $table->bigInteger('role_id');
+            $table->float('price', 11, 2)->default(0);
+            $table->bigInteger('product_id')->default(0);
+            $table->bigInteger('product_specification_value_to_product_id')->default(0);
+        });
+        
+        Schema::create('product_activity_rule_products', function (Blueprint $table) {
+            $table->increments('id');
+            $table->bigInteger('activity_id');
+            $table->bigInteger('activity_rules_id')->default(0);
             $table->bigInteger('product_id');
-            $table->float('price', 11, 2);
+            $table->bigInteger('product_specification_value_to_product_id');
+            $table->bigInteger('sales_storage')->default(0);
+            $table->bigInteger('sales_volume')->default(0);
+            $table->tinyInteger('status')->default(1);
+            $table->tinyInteger('type')->default(1);
         });
-        
-        Schema::create('product_activity_order_item', function (Blueprint $table) {
-            $table->increments('id');
-            $table->bigInteger('activity_id');
-            $table->bigInteger('price_limit')->default(0);
-            $table->float('credit', 11, 2);
-        });
-        
-        Schema::create('product_activity_order_item_gift_products', function (Blueprint $table) {
-            $table->increments('id');
-            $table->bigInteger('activity_id');
-            $table->bigInteger('price_limit')->default(0);
-            $table->float('credit', 11, 2);
-        });
-        
-        Schema::create('product_activity_order_item_log', function (Blueprint $table) {
-            $table->increments('id');
-            $table->bigInteger('activity_id');
-            $table->bigInteger('price_limit')->default(0);
-            $table->float('credit', 11, 2);
-        });
-            
     }
 
     /**
@@ -88,10 +69,7 @@ class CreateProductActivity extends Migration
     public function down()
     {
         Schema::dropIfExists('product_activity');
-        Schema::dropIfExists('product_to_product_activity');
-        Schema::dropIfExists('product_to_product_activity_role_price');
-        Schema::dropIfExists('product_activity_order_item_log');
-        Schema::dropIfExists('product_activity_order_item');
-        Schema::dropIfExists('product_activity_products_gift_products');
+        Schema::dropIfExists('product_activity_rules');
+        Schema::dropIfExists('product_activity_rule_roles');
     }
 }
