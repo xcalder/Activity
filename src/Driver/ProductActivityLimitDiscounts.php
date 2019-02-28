@@ -159,9 +159,10 @@ class ProductActivityLimitDiscounts implements ActivityInterface
     public static function getManagetForm($request){
         $id = $request->input('id');
         $api_token = $request->input('api_token');
+        $site_role = $request->input('site_role', 'sales');
         $action_product_search_form = url('/api/product/search?width=24&height=24');
-        $action_add_product_to_rule = url('/api/activity/add_product_to_activity_rule');
-        $action_del_product_to_rule = url('/api/activity/del_product_to_activity_rule');
+        $action_add_product_to_rule = url('/api/activity/add_product_to_activity_rule?site_role='.$site_role);
+        $action_del_product_to_rule = url('/api/activity/del_product_to_activity_rule?site_role='.$site_role);
         echo <<<ETO
           <div class="modal-dialog modal-lg manager-activity-products" role="document">
             <div class="modal-content p-3" style="min-height: 600px">
@@ -340,7 +341,7 @@ class ProductActivityLimitDiscounts implements ActivityInterface
                 var html = '';
                 $.ajax({
             	    type: 'GET',
-            	    url: url+'/api/activity/get_activity_rule_products',
+            	    url: url+'/api/activity/get_activity_rule_products?site_role=$site_role',
             	    data: {api_token: api_token,id:$id},
             	    dataType: 'json',
             	    success: function(data){

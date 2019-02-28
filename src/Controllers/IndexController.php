@@ -88,17 +88,17 @@ class IndexController extends BaseController
         $user_id = $user['id'];
         $store_id = $user['store_id'] ?? 0;
         
-        $result = ProductActivity::where('type', $request->input('type'))->orderBy('id', 'desc')->paginate(env('PAGE_LIMIT', 25))->toArray();
+        $result = ProductActivity::where('type', $request->input('type'))->where('store_id', $store_id)->orderBy('id', 'desc')->paginate(env('PAGE_LIMIT', 25))->toArray();
         if(!empty($result['data'])){
-            $config_activity = config('all_status.activity');
-            $config_activity_order = $config_activity['order'];
-            $config_activity_product = $config_activity['product'];
+            $config_activity = config('all_status.activity')[$request->input('site_role')];
+            $config_activity_order = $config_activity['order'] ?? [];
+            $config_activity_product = $config_activity['product'] ?? [];
             $config_activity_order = array_under_reset($config_activity_order, 'type');
             $config_activity_product = array_under_reset($config_activity_product, 'type');
             $config_activity_status = config('all_status.activity_status');
             $tools_service = new ToolsService();
             foreach ($result['data'] as $key=>$value){
-                $result['data'][$key]['type_text'] = $config_activity_order[$value['type']]['full_name'] ?? $config_activity_product[$value['type']]['full_name'];
+                $result['data'][$key]['type_text'] = $config_activity_order[$value['type']]['full_name'] ?? ($config_activity_product[$value['type']]['full_name'] ?? []);
                 $result['data'][$key]['status_text'] = $config_activity_status[$value['status']];
                 $result['data'][$key]['thumb_tag_img'] = $tools_service->serviceResize($value['tag_img'], $width, $height);
             }
@@ -146,15 +146,15 @@ class IndexController extends BaseController
         $result = ProductActivity::where('id', $request->input('id'))->first();
         
         if(!empty($result)){
-            $config_activity = config('all_status.activity');
-            $config_activity_order = $config_activity['order'];
-            $config_activity_product = $config_activity['product'];
+            $config_activity = config('all_status.activity')[$request->input('site_role')];
+            $config_activity_order = $config_activity['order'] ?? [];
+            $config_activity_product = $config_activity['product'] ?? [];
             $config_activity_order = array_under_reset($config_activity_order, 'type');
             $config_activity_product = array_under_reset($config_activity_product, 'type');
             $config_activity_status = config('all_status.activity_status');
-            $tools_service = new ToolsService();
             
-            $result['type_text'] = $config_activity_order[$result['type']]['full_name'] ?? $config_activity_product[$result['type']]['full_name'];
+            $tools_service = new ToolsService();
+            $result['type_text'] = $config_activity_order[$result['type']]['full_name'] ?? ($config_activity_product[$result['type']]['full_name'] ?? []);
             $result['status_text'] = $config_activity_status[$result['status']];
             $result['thumb_tag_img'] = $tools_service->serviceResize($result['tag_img'], $width, $height);
             
@@ -232,7 +232,21 @@ class IndexController extends BaseController
      * @param Request $request
      */
     public function getActivityConfig(Request $request){
+        $data = [];
+        $data['status'] =  false;
+        
+        $rules = [
+            'site_role' => 'required'
+        ];
+        $validation = new Validation();
+        $result = $validation->return($request, $rules);
+        if ($result) {
+            $data['error'] = $result;
+            return response()->json($data);
+        }
+        
         $config = config('all_status.activity');
+        $config = $config[$request->input('site_role', 'sales')];
         $data = [];
         $data['status'] = true;
         $data['config'] = $config;
@@ -247,9 +261,23 @@ class IndexController extends BaseController
         Activity::with($driver)->getManagetForm($request);
     }
     
-    private function getConfigDriver(){
+    private function getConfigDriver($request){
         $data = [];
+        $data['status'] =  false;
+        
+        $rules = [
+            'site_role' => 'required'
+        ];
+        $validation = new Validation();
+        $result = $validation->return($request, $rules);
+        if ($result) {
+            $data['error'] = $result;
+            return response()->json($data);
+        }
+        
         $config = config('all_status.activity');
+        $config = $config[$request->input('site_role', 'sales')];
+        
         if(!empty($config['order'])){
             foreach ($config['order'] as $key=>$value){
                 $data[$value['type']] = $key;
@@ -278,7 +306,7 @@ class IndexController extends BaseController
         }
         
         $type = $result['type'];
-        $driver_config = $this->getConfigDriver();
+        $driver_config = $this->getConfigDriver($request);
         if(empty($driver_config)){
             return false;
         }

@@ -235,9 +235,10 @@ class OrderActivityIncrEasePriceRedemption implements ActivityInterface
     public static function getManagetForm($request){
         $id = $request->input('id');
         $api_token = $request->input('api_token');
+        $site_role = $request->input('site_role', 'sales');
         $action_product_search_form = url('/api/product/search?width=24&height=24');
-        $action_add_product_to_rule = url('/api/activity/add_product_to_activity_rule');
-        $action_del_product_to_rule = url('/api/activity/del_product_to_activity_rule');
+        $action_add_product_to_rule = url('/api/activity/add_product_to_activity_rule?site_role='.$site_role);
+        $action_del_product_to_rule = url('/api/activity/del_product_to_activity_rule?site_role='.$site_role);
         echo <<<ETO
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content p-3">
@@ -412,7 +413,7 @@ class OrderActivityIncrEasePriceRedemption implements ActivityInterface
             
             var i = 0;
             function add_rules(){
-                $('#add-rules-form').attr('action', url+'/api/activity/add_activity_rules');
+                $('#add-rules-form').attr('action', url+'/api/activity/add_activity_rules?site_role=$site_role');
                 $('.add-rolues input[name="limit"]').val('0');
                 $('.add-rolues input[name="price"]').val('0');
                 $('.add-rolues input[name="roles[]"]').prop('checked', false);
@@ -446,7 +447,7 @@ class OrderActivityIncrEasePriceRedemption implements ActivityInterface
                 $.ajax({
             	    type: 'GET',
             	    url: url+'/api/activity/get_activity_rule_list',
-            	    data: {api_token: api_token, id:$id},
+            	    data: {api_token: api_token, id:$id, site_role:'$site_role'},
             	    dataType: 'json',
             	    success: function(data){
             	    	if(data.status){
@@ -490,7 +491,7 @@ class OrderActivityIncrEasePriceRedemption implements ActivityInterface
             function delete_rule(rule_id){
                    $.ajax({
             	    type: 'DELETE',
-            	    url: url+'/api/activity/del_activity_rule',
+            	    url: url+'/api/activity/del_activity_rule?site_role=$site_role',
             	    data: {api_token: api_token, id:$id, rule_id:rule_id},
             	    dataType: 'json',
             	    success: function(data){
@@ -516,7 +517,7 @@ class OrderActivityIncrEasePriceRedemption implements ActivityInterface
                 var html = '';
                 $.ajax({
             	    type: 'GET',
-            	    url: url+'/api/activity/get_activity_rule_products',
+            	    url: url+'/api/activity/get_activity_rule_products?site_role=$site_role',
             	    data: {api_token: api_token,rule_id:rule_id,id:$id},
             	    dataType: 'json',
             	    success: function(data){
