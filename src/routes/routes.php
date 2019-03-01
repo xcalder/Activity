@@ -9,6 +9,11 @@ Route::group(['prefix' => 'api'], function($router){
             'uses' => 'Activity\IndexController@getActivity',
             'description' => '用Id取活动'
         ]);
+        $router->get('get_site_activity', [
+            'group' => 'activity',
+            'uses' => 'Activity\IndexController@getSiteActivity',
+            'description' => '取所有的平台活动，给商家报名用'
+        ]);
         $router->get('get_activitys_for_type', [
             'group' => 'activity',
             'uses' => 'Activity\IndexController@getActivitysForType',
@@ -28,6 +33,11 @@ Route::group(['prefix' => 'api'], function($router){
             'group' => 'activity',
             'uses' => 'Activity\IndexController@getActivityManagerForm',
             'description' => '用Id取活动管理表单'
+        ]);
+        $router->get('get_activity_apply_form', [
+            'group' => 'activity',
+            'uses' => 'Activity\IndexController@getActivityApplyForm',
+            'description' => '用Id取活动报名表单'
         ]);
         $router->get('get_activity_rule_products', [
             'group' => 'activity',

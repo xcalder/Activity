@@ -47,6 +47,12 @@ interface ActivityInterface
     public static function getManagetForm($request);
     
     /**
+     * 平台活动报名表单
+     * @param unknown $request
+     */
+    public static function getApplyForm($request);
+    
+    /**
      * 查活动详情
      */
     public static function getActivity($request);
@@ -66,4 +72,5 @@ interface ActivityInterface
      * 比如活动开始/结束
      */
     public static function queue($request);
+    
 }

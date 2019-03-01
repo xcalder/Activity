@@ -160,7 +160,7 @@ class ProductActivitySpike implements ActivityInterface
         $id = $request->input('id');
         $api_token = $request->input('api_token');
         $site_role = $request->input('site_role', 'sales');
-        $action_product_search_form = url('/api/product/search?width=24&height=24');
+        $action_product_search_form = url('/api/product/search?width=24&height=24&activity_search=1&id='.$id);
         $action_add_product_to_rule = url('/api/activity/add_product_to_activity_rule?site_role='.$site_role);
         $action_del_product_to_rule = url('/api/activity/del_product_to_activity_rule?site_role='.$site_role);
         echo <<<ETO
@@ -278,13 +278,20 @@ class ProductActivitySpike implements ActivityInterface
                     var html = '';
                     var products = data.data.data;
                     var e = 0;
+                    var coincide_specification_value_ids = data.data.coincide_product_specification_value_to_product_ids;
                     for(var i in products){
                         var product = products[i];
                         if(!isEmpty(product.specification)){
                             for(var c in product.specification){
                                 var specification = product.specification[c];
+                                html += '<tr>';
                                 for(var d in this_roles){
-                                    html += '<tr><td><input data-i="'+i+'" class="select-product product-id-'+i+'" type="checkbox" name="rules_products['+e+'][product_id]" value="'+product.id+'"><input class="product_specification_value_to_product_id-'+i+'" type="hidden" name="rules_products['+e+'][product_specification_value_to_product_id]" value="'+specification.product_specification_value_to_product_id+'"></td><td>'+specification.specification_title+':'+specification.specification_value_title+'</td><td><input type="text" name="rules_products['+e+'][sales_storage]" value="0" class="form-control"></td><td>'+this_roles[d].name+'</td><td><input type="text" name="rules_products['+e+'][role_price]" class="form-control" value="0.00"><input type="hidden" name="rules_products['+e+'][role_id]" class="form-control" value="'+this_roles[d].id+'"></td><td><img src="'+product.thumb_img+'">'+product.title+'</td></tr>';
+                                    if(!isEmpty(coincide_specification_value_ids) && in_array(specification.product_specification_value_to_product_id, coincide_specification_value_ids)){
+                                        html += '<td title="此商品在当前活动与另一个活动时间重合,不能添加"><input data-i="'+e+'" class="product-id-'+e+'" type="checkbox" name="rules_products['+e+'][product_id]" value="'+product.id+'" disabled><input class="product_specification_value_to_product_id-'+e+'" type="hidden" name="rules_products['+e+'][product_specification_value_to_product_id]" value="'+specification.product_specification_value_to_product_id+'" disabled></td>';
+                                    }else{
+                                        html += '<td><input data-i="'+e+'" class="select-product product-id-'+e+'" type="checkbox" name="rules_products['+e+'][product_id]" value="'+product.id+'"><input class="product_specification_value_to_product_id-'+e+'" type="hidden" name="rules_products['+e+'][product_specification_value_to_product_id]" value="'+specification.product_specification_value_to_product_id+'"></td>';
+                                    }
+                                    html += '<td>'+specification.specification_title+':'+specification.specification_value_title+'</td><td><input type="text" name="rules_products['+e+'][sales_storage]" value="0" class="form-control"></td><td>'+this_roles[d].name+'</td><td><input type="text" name="rules_products['+e+'][role_price]" class="form-control" value="0.00"><input type="hidden" name="rules_products['+e+'][role_id]" class="form-control" value="'+this_roles[d].id+'"></td><td><img src="'+product.thumb_img+'">'+product.title+'</td></tr>';
                                     e++;
                                 }
                                 e++;
@@ -422,6 +429,14 @@ class ProductActivitySpike implements ActivityInterface
         </script>
 ETO;
     }
+        
+    /**
+     * 报名表单
+     * @param unknown $request
+     */
+    public static function getApplyForm($request){
+        
+    }
     
     /**
      * 查活动详情
@@ -490,4 +505,5 @@ ETO;
     public static function queue($request){
         
     }
+    
 }

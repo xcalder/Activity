@@ -24,4 +24,9 @@ class ProductActivity extends Model
     protected $hidden = [
         
     ];
+    
+    public function rules()
+    {
+        return $this->hasMany('Activity\Models\ProductActivityRules', 'activity_id', 'id');
+    }
 }

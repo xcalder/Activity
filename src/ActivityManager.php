@@ -18,6 +18,21 @@ class ActivityManager extends Manager implements Factory
         return $this->driver($driver);
     }
     
+    protected function createSiteActivityGiftMoneyDriver()
+    {
+        return $this->buildProvider(SiteActivityGiftMoney::class);
+    }
+    
+    protected function createSiteActivitySpikeDriver()
+    {
+        return $this->buildProvider(SiteActivitySpike::class);
+    }
+    
+    protected function createSiteActivityVoucherDriver()
+    {
+        return $this->buildProvider(SiteActivityVoucher::class);
+    }
+    
     protected function createOrderActivityGiftMoneyDriver()
     {
         return $this->buildProvider(OrderActivityGiftMoney::class);
@@ -98,5 +113,14 @@ class ActivityManager extends Manager implements Factory
     public function getDefaultDriver()
     {
         throw new InvalidArgumentException('No Activity driver was specified.');
+    }
+    
+    /**
+     * 检测商品是否和已有活动重叠
+     * @param unknown $request
+     */
+    public function checkoutDateTimeCoincide($request, $id){
+        $server = new Server();
+        return $server->checkoutDateTimeCoincide($request, $id);
     }
 }

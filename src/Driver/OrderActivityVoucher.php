@@ -157,7 +157,7 @@ class OrderActivityVoucher implements ActivityInterface
         $id = $request->input('id');
         $api_token = $request->input('api_token');
         $site_role = $request->input('site_role', 'sales');
-        $action_product_search_form = url('/api/product/search?width=24&height=24');
+        $action_product_search_form = url('/api/product/search?width=24&height=24&activity_search=1&id='.$id);
         $action_add_product_to_rule = url('/api/activity/add_product_to_activity_rule?site_role='.$site_role);
         $action_del_product_to_rule = url('/api/activity/del_product_to_activity_rule?site_role='.$site_role);
         echo <<<ETO
@@ -340,6 +340,14 @@ class OrderActivityVoucher implements ActivityInterface
         </script>
 ETO;
     }
+        
+    /**
+     * 报名表单
+     * @param unknown $request
+     */
+    public static function getApplyForm($request){
+        
+    }
     
     /**
      * 查活动详情
@@ -376,4 +384,5 @@ ETO;
     public static function queue($request){
         
     }
+    
 }

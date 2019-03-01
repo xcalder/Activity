@@ -9,11 +9,11 @@ use Illuminate\Support\Facades\DB;
 use Activity\Models\ProductActivityRuleRoles;
 
 /**
- * 限时折扣方法类
+ * 平台秒杀方法类
  * @author xcalder
  *
  */
-class ProductActivityLimitDiscounts implements ActivityInterface
+class SiteActivitySpike implements ActivityInterface
 {
     /**
      * 添加规则
@@ -167,6 +167,200 @@ class ProductActivityLimitDiscounts implements ActivityInterface
           <div class="modal-dialog modal-lg manager-activity-products" role="document">
             <div class="modal-content p-3" style="min-height: 600px">
                 <h4>活动商品管理</h4>
+                <!-- Nav tabs -->
+                  <ul class="nav nav-tabs" role="tablist">
+                    <li role="presentation" class="active"><a href="#passed" aria-controls="passed" role="tab" data-toggle="tab" >已通过</a></li>
+                    <li role="presentation"><a href="#pending-review" aria-controls="pending-review" role="tab" data-toggle="tab">待审核</a></li>
+                    <li role="presentation"><a href="#rejected" aria-controls="rejected" role="tab" data-toggle="tab">已拒绝</a></li>
+                  </ul>
+                
+                  <!-- Tab panes -->
+                  <div class="tab-content">
+                    <div role="tabpanel" class="tab-pane active" id="passed">
+                        <form id="pending-review-form" action="$action_del_product_to_rule" method="post" enctype="multipart/form-data">
+                            <input type="hidden" name="api_token" value="$api_token">
+                            <input type="hidden" name="id" value="$id">
+                            <table class="table"><thead><tr><td><button class="btn btn-default btn-sm" type="submit">移出</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>活动数量</td><td>销量</td><td>角色名</td><td>角色价</td><td>商品名</td></tr></thead><tbody></tbody><tfoot></tfoot></table>
+                        </form>
+                    </div>
+                    <div role="tabpanel" class="tab-pane" id="pending-review">
+                        <form id="pending-review-form" action="$action_del_product_to_rule" method="post" enctype="multipart/form-data">
+                            <input type="hidden" name="api_token" value="$api_token">
+                            <input type="hidden" name="id" value="$id">
+                            <table class="table"><thead><tr><td><button class="btn btn-default btn-sm" type="submit">通过</button><button class="btn btn-default btn-sm" type="submit">拒绝</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>活动数量</td><td>销量</td><td>角色名</td><td>角色价</td><td>商品名</td></tr></thead><tbody></tbody><tfoot></tfoot></table>
+                        </form>
+                    </div>
+                    <div role="tabpanel" class="tab-pane" id="rejected">
+                        <form id="pending-review-form" action="$action_del_product_to_rule" method="post" enctype="multipart/form-data">
+                            <input type="hidden" name="api_token" value="$api_token">
+                            <input type="hidden" name="id" value="$id">
+                            <table class="table"><thead><tr><td></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>活动数量</td><td>销量</td><td>角色名</td><td>角色价</td><td>商品名</td></tr></thead><tbody></tbody><tfoot></tfoot></table>
+                        </form>
+                    </div>
+                  </div>
+            </div>
+          </div>
+        <script type="text/javascript">
+            var this_roles;
+            $(document).ready(function () {
+                getroles();
+                
+                //添加商品到活动全选反选事件
+                $(document).on('click','#add-rule-products .select-all',function(event){
+                    if($(this).prop('checked')){
+                        $('#add-rule-products .select-product').prop('checked', true);
+                    }else{
+                        $('#add-rule-products .select-product').prop('checked', false);
+                    }
+                });
+                $(document).on('click','#add-rule-products .select-product',function(event){
+                    changeProductselectAll('#add-rule-products');
+                });
+                //从活动中移出，全选反选事件
+                $(document).on('click','#pending-review-form .select-all',function(event){
+                    if($(this).prop('checked')){
+                        $('#pending-review-form .select-product').prop('checked', true);
+                    }else{
+                        $('#pending-review-form .select-product').prop('checked', false);
+                    }
+                });
+                $(document).on('click','#pending-review-form .select-product',function(event){
+                    changeProductselectAll('#pending-review-form');
+                });                
+
+            })
+
+            function changeProductselectAll(div){
+                var select_all = true;
+                $(div+' .select-product').each(function(e, item){
+                    if(!$(this).prop('checked')){
+                        select_all = false;
+                        return false;
+                    }
+                });
+                if(!select_all){
+                    $(div+' .select-all').prop('checked', false);
+                }else{
+                    $(div+' .select-all').prop('checked', true);
+                }
+            }
+
+            function getroles(){
+                $.ajax({
+            	    type: 'GET',
+            	    url: url+'/api/role/get_roles',
+            	    data: {api_token: api_token, set_price:1},
+            	    dataType: 'json',
+            	    success: function(data){
+            	    	if(data.status){
+                            this_roles = data.data.data;
+                            getActivityRulesProducts();
+                        }
+                    }
+                });
+            }
+
+            function getActivityRulesProducts(){
+                var html = '';
+                $.ajax({
+            	    type: 'GET',
+            	    url: url+'/api/activity/get_activity_rule_products?site_role=$site_role',
+            	    data: {api_token: api_token,id:$id},
+            	    dataType: 'json',
+            	    success: function(data){
+            	    	if(data.status){
+                            var products = data.data.data;
+                            var e = 0;
+                            for(var i in products){
+                                var product = products[i];
+                                for(var d in product.roles_price){
+                                    var role = product.roles_price[d];
+                                    html += '<tr><td><input type="checkbox" name="rules_products['+i+'][product_id]" value="'+product.product_id+'" class="select-product"><input type="hidden" name="rules_products['+i+'][product_specification_value_to_product_id]" value="'+product.product_specification_value_to_product_id+'"><input type="hidden" name="rules_products['+i+'][rule_id]" value="'+product.activity_rules_id+'"></td><td>';
+                                    for(var c in product.specification){
+                                        html += c+';'+product.specification[c];
+                                    }
+                                    html += '</td><td>'+product.sales_storage+'</td><td>'+product.sales_volume+'</td>';
+                                    for(var b in this_roles){
+                                        if(this_roles[b].id == role.role_id){
+                                             html += '<td>'+this_roles[b].name+'</td>';
+                                        }
+                                    }
+                                    html += '<td>'+role.price+'</td><td><img src="'+product.thumb_img+'">'+product.title+'</td></tr>';
+                                }
+                                e++;
+                            }
+                            pagination(data, '#pending-review-form tfoot', 7);
+                        }
+                        $('#pending-review-form tbody').html(html);
+                    }
+                });
+            }
+            
+            var options = {
+    		   beforeSubmit: showRequestAddRuleProduct,
+    		   success: showResponseAddRuleProduct,
+    		   dataType: 'json',
+    		   timeout: 3000
+    		}
+            //添加商品到活动
+            $('#add-rule-products').ajaxForm(options);
+            
+            function showRequestAddRuleProduct(formData, jqForm, options){
+            	return true;
+            };  
+            
+            function showResponseAddRuleProduct(responseText, statusText){
+            	var data = responseText;
+                if(data.status){
+                    getActivityRulesProducts(data.rule_id);
+                    toastr.success('添加成功');
+                }else{
+                    toastr.warning('添加失败');
+                }
+            }
+
+            var options = {
+    		   beforeSubmit: showRequestDelProductToRule,
+    		   success: showResponseDelProductToRule,
+    		   dataType: 'json',
+    		   timeout: 3000
+    		}
+            //创建使用条件表单
+            $('#pending-review-form').ajaxForm(options);
+            
+            function showRequestDelProductToRule(formData, jqForm, options){
+            	return true;
+            };  
+            
+            function showResponseDelProductToRule(responseText, statusText){
+            	var data = responseText;console.log(data);
+            	if(data.status){
+                    getActivityRulesProducts(data.rule_id);
+            		toastr.success('删除成功');
+            	}else{
+            		toastr.warning('删除失败');
+            	}
+            }   
+
+        </script>
+ETO;
+    }
+        
+    /**
+     * 报名表单
+     * @param unknown $request
+     */
+    public static function getApplyForm($request){
+        $id = $request->input('id');
+        $api_token = $request->input('api_token');
+        $site_role = $request->input('site_role', 'sales');
+        $action_product_search_form = url('/api/product/search?width=24&height=24&activity_search=1&id='.$id);
+        $action_add_product_to_rule = url('/api/activity/add_product_to_activity_rule?site_role='.$site_role);
+        $action_del_product_to_rule = url('/api/activity/del_product_to_activity_rule?site_role='.$site_role);
+        echo <<<ETO
+          <div class="modal-dialog modal-lg manager-activity-products" role="document">
+            <div class="modal-content p-3" style="min-height: 600px">
+                <h4>活动商品管理</h4>
                 <form id="product-search-form" method="get" enctype="multipart/form-data" action="$action_product_search_form">
                     <table class="table product-list"><tbody><tr><td>分类</td><td><select class="form-control" name="category_id"></select></td><td>品牌</td><td><select class="form-control" name="brand_id"></select></td><td>标题</td><td><input name="keyword" class="form-control" type="text"></td><td><button type="submit" class="btn btn-default">搜索</button></td></tr></tbody></table>
                 </form>
@@ -175,7 +369,7 @@ class ProductActivityLimitDiscounts implements ActivityInterface
                     <li role="presentation" class="active"><a href="#joined" aria-controls="joined" role="tab" data-toggle="tab" >已加入</a></li>
                     <li role="presentation"><a href="#not-joined" aria-controls="not-joined" role="tab" data-toggle="tab">未加入</a></li>
                   </ul>
-                
+                  
                   <!-- Tab panes -->
                   <div class="tab-content">
                     <div role="tabpanel" class="tab-pane active" id="joined">
@@ -224,10 +418,10 @@ class ProductActivityLimitDiscounts implements ActivityInterface
                 });
                 $(document).on('click','#unjoined-form .select-product',function(event){
                     changeProductselectAll('#unjoined-form');
-                });                
-
+                });
+                
             })
-
+            
             function changeProductselectAll(div){
                 var select_all = true;
                 $(div+' .select-product').each(function(e, item){
@@ -242,7 +436,7 @@ class ProductActivityLimitDiscounts implements ActivityInterface
                     $(div+' .select-all').prop('checked', true);
                 }
             }
-
+            
             function getroles(){
                 $.ajax({
             	    type: 'GET',
@@ -257,7 +451,7 @@ class ProductActivityLimitDiscounts implements ActivityInterface
                     }
                 });
             }
-
+            
             var options = {
     		   beforeSubmit: showRequestSearch,
     		   success: showResponseSearch,
@@ -270,7 +464,7 @@ class ProductActivityLimitDiscounts implements ActivityInterface
             function showRequestSearch(formData, jqForm, options){
                 $('a[aria-controls="not-joined"]').trigger('click');
             	return true;
-            };  
+            };
             
             function showResponseSearch(responseText, statusText){
             	var data = responseText;
@@ -305,7 +499,7 @@ class ProductActivityLimitDiscounts implements ActivityInterface
             		toastr.warning('搜索失败');
             	}
             }
-
+            
             function getCategory(){
                 $.ajax({
             	    type: 'GET',
@@ -324,7 +518,7 @@ class ProductActivityLimitDiscounts implements ActivityInterface
                     }
                 });
             }
-
+            
             function getBrand(){
                 $.ajax({
             	    type: 'GET',
@@ -343,7 +537,7 @@ class ProductActivityLimitDiscounts implements ActivityInterface
                     }
                 });
             }
-    
+            
             function getActivityRulesProducts(){
                 var html = '';
                 $.ajax({
@@ -359,7 +553,7 @@ class ProductActivityLimitDiscounts implements ActivityInterface
                                 var product = products[i];
                                 for(var d in product.roles_price){
                                     var role = product.roles_price[d];
-                                    html += '<tr><td><input type="checkbox" name="rules_products['+e+'][product_id]" value="'+product.product_id+'" class="select-product"><input type="hidden" name="rules_products['+e+'][product_specification_value_to_product_id]" value="'+product.product_specification_value_to_product_id+'"><input type="hidden" name="rules_products['+e+'][rule_id]" value="'+product.activity_rules_id+'"></td><td>';
+                                    html += '<tr><td><input type="checkbox" name="rules_products['+i+'][product_id]" value="'+product.product_id+'" class="select-product"><input type="hidden" name="rules_products['+i+'][product_specification_value_to_product_id]" value="'+product.product_specification_value_to_product_id+'"><input type="hidden" name="rules_products['+i+'][rule_id]" value="'+product.activity_rules_id+'"></td><td>';
                                     for(var c in product.specification){
                                         html += c+';'+product.specification[c];
                                     }
@@ -391,7 +585,7 @@ class ProductActivityLimitDiscounts implements ActivityInterface
             
             function showRequestAddRuleProduct(formData, jqForm, options){
             	return true;
-            };  
+            };
             
             function showResponseAddRuleProduct(responseText, statusText){
             	var data = responseText;
@@ -402,7 +596,7 @@ class ProductActivityLimitDiscounts implements ActivityInterface
                     toastr.warning('添加失败');
                 }
             }
-
+            
             var options = {
     		   beforeSubmit: showRequestDelProductToRule,
     		   success: showResponseDelProductToRule,
@@ -414,7 +608,7 @@ class ProductActivityLimitDiscounts implements ActivityInterface
             
             function showRequestDelProductToRule(formData, jqForm, options){
             	return true;
-            };  
+            };
             
             function showResponseDelProductToRule(responseText, statusText){
             	var data = responseText;console.log(data);
@@ -424,18 +618,10 @@ class ProductActivityLimitDiscounts implements ActivityInterface
             	}else{
             		toastr.warning('删除失败');
             	}
-            }   
-
+            }
+            
         </script>
 ETO;
-    }
-        
-    /**
-     * 报名表单
-     * @param unknown $request
-     */
-    public static function getApplyForm($request){
-        
     }
     
     /**

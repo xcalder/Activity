@@ -8,9 +8,53 @@ use Illuminate\Support\Facades\Auth;
 use Laravel\Lumen\Routing\Controller as BaseController;
 use App\Service\ToolsService;
 use Activity\Facades\Activity;
+use Activity\Models\ProductActivityRuleRoles;
 
 class IndexController extends BaseController
 {
+    /**
+     * 取所有的平台活动，给商家报名用
+     * @param Request $request
+     */
+    public function getSiteActivity(Request $request){
+        $data = [];
+        $data['status'] = false;
+        $site_activity_config = config('all_status.activity.admin.product');
+        if(empty($site_activity_config)){
+            return response()->json($data);
+        }
+        $types = lumen_array_column($site_activity_config, 'type');
+        $result = ProductActivity::with(['rules'])->whereIn('type', $types)->orderBy('status', 'asc')->orderBy('started_at', 'desc')->paginate(env('PAGE_LIMIT', 25))->toArray();
+        $site_activity_config = array_under_reset($site_activity_config, 'type');
+        
+        if(!empty($result['data'])){
+            $site_activity_status = config('all_status.site_activity_status');
+            $rule_ids = [];
+            foreach ($result['data'] as $key=>$value){
+                $result['data'][$key]['status_text'] = $site_activity_status[$value['status']];
+                $result['data'][$key]['type_text'] = $site_activity_config[$value['type']]['name'];
+                $rule_text = $site_activity_config[$value['type']]['rule_text'];
+                if(!empty($value['rules'])){
+                    foreach ($value['rules'] as $k=>$v){
+                        $result['data'][$key]['rules'][$k]['rule_text'] = sprintf($rule_text, $v['limit'], $v['price'], $v['get_limit']);
+                        $rule_ids[] = $v['id'];
+                    }
+                    //取角色
+                }
+            }
+            $rule_ids = array_unique(array_filter($rule_ids));
+            $roles = ProductActivityRuleRoles::whereIn('product_activity_rule_roles.activity_rules_id', $rule_ids)->join('users_roles as ur', function($join){
+                $join->on('ur.id', '=', 'product_activity_rule_roles.role_id');
+            })->select(['ur.tag', 'ur.id', 'product_activity_rule_roles.activity_rules_id'])->groupBy('ur.id')->get();
+            
+            $data['roles'] = $roles;
+            $data['data'] = $result;
+            $data['status'] = true;
+        }
+        
+        return response()->json($data);
+    }
+    
     /**
      * 用id取活动规则列表
      * @param Request $request
@@ -259,6 +303,14 @@ class IndexController extends BaseController
             return response()->json(['status' => false]);
         }
         Activity::with($driver)->getManagetForm($request);
+    }
+    
+    public function getActivityApplyForm(Request $request){
+        $driver = $this->getDriver($request);
+        if(!$driver){
+            return response()->json(['status' => false]);
+        }
+        Activity::with($driver)->getApplyForm($request);
     }
     
     private function getConfigDriver($request){
