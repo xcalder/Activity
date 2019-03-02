@@ -195,6 +195,7 @@ class SiteActivityGiftMoney implements ActivityInterface
         
         $rules = [
             'id' => 'required',
+            'rules_products' => 'required|array'
         ];
         $validation = new Validation();
         $result = $validation->return($request, $rules);
@@ -213,11 +214,28 @@ class SiteActivityGiftMoney implements ActivityInterface
             $activity_id = $request->input('id');
             $product_id = lumen_array_column($roles_products, 'product_id');
             $product_specification_value_to_product_id = lumen_array_column($roles_products, 'product_specification_value_to_product_id');
-            if(ProductActivityRuleProducts::where('activity_id', $activity_id)->whereIn('product_specification_value_to_product_id', $product_specification_value_to_product_id)->delete()){
-                $data['status'] = true;
+            if($request->has('status') && in_array($request->input('status', 0), [4, 5])){
+                $status = $request->input('status');
+                $data['status'] = self::_changeActivityProduct($activity_id, $product_specification_value_to_product_id, $status);
+            }else{
+                $data['status'] = self::_delActivityProduct($activity_id, $product_specification_value_to_product_id);
             }
         }
         return $data;
+    }
+    
+    private static function _delActivityProduct($activity_id, $product_specification_value_to_product_id){
+        if(ProductActivityRuleProducts::where('activity_id', $activity_id)->whereIn('product_specification_value_to_product_id', $product_specification_value_to_product_id)->delete()){
+            return true;
+        }
+        return false;
+    }
+    
+    private static function _changeActivityProduct($activity_id, $product_specification_value_to_product_id, $status){
+        if(ProductActivityRuleProducts::where('activity_id', $activity_id)->whereIn('product_specification_value_to_product_id', $product_specification_value_to_product_id)->update(['status' => $status])){
+            return true;
+        }
+        return false;
     }
     
     /**
@@ -234,7 +252,6 @@ class SiteActivityGiftMoney implements ActivityInterface
         $id = $request->input('id');
         $api_token = $request->input('api_token');
         $site_role = $request->input('site_role', 'sales');
-        $action_product_search_form = url('/api/product/search?width=24&height=24&activity_search=1&id='.$id);
         $action_add_product_to_rule = url('/api/activity/add_product_to_activity_rule?site_role='.$site_role);
         $action_del_product_to_rule = url('/api/activity/del_product_to_activity_rule?site_role='.$site_role);
         echo <<<ETO
@@ -247,7 +264,7 @@ class SiteActivityGiftMoney implements ActivityInterface
                                 <tr><td class="w-260-g">规则</td><td>角色</td><td>操作</td></tr>
                             </thead>
                             <tbody id="OrderActivityFullDelivery-rules"></tbody>
-                            <tfoot><tr><td colspan="3" class="text-right"><button class="btn btn-success btn-sm mr-2" type="button" onclick="manager_activity_products();">商品管理</button><button class="btn btn-success btn-sm" type="button" onclick="add_rules();">添加</button></td></tr></tfoot>
+                            <tfoot><tr><td colspan="3" class="text-right"><button class="btn btn-success btn-sm mr-2" type="button" onclick="manager_activity_products();">商品管理</button><button class="btn btn-success btn-sm" type="button" onclick="add_rules();">添加规则</button></td></tr></tfoot>
                         </table>
                     </div>
             </div>
@@ -307,25 +324,22 @@ class SiteActivityGiftMoney implements ActivityInterface
                   <!-- Tab panes -->
                   <div class="tab-content">
                     <div role="tabpanel" class="tab-pane active" id="passed" data-status="5">
-                        <form id="unjoined-form" action="$action_del_product_to_rule" method="post" enctype="multipart/form-data">
+                        <form id="passed-unjoined-form" action="$action_del_product_to_rule" method="post" enctype="multipart/form-data">
                             <input type="hidden" name="api_token" value="$api_token">
                             <input type="hidden" name="id" value="$id">
-                            <table class="table"><thead><tr><td><button class="btn btn-default btn-sm" type="submit">移出</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>商品名</td></tr></thead><tbody></tbody><tfoot></tfoot></table>
+                            <table class="table"><thead><tr><td><button class="btn btn-default btn-sm" type="submit">移出</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>店铺</td><td>规格</td><td>商品名</td></tr></thead><tbody></tbody><tfoot></tfoot></table>
                         </form>
                     </div>
                     <div role="tabpanel" class="tab-pane" id="pending-review" data-status="3">
-                        <form id="unjoined-form" action="$action_del_product_to_rule" method="post" enctype="multipart/form-data">
+                        <form id="pending-review-unjoined-form" action="$action_del_product_to_rule" method="post" enctype="multipart/form-data">
                             <input type="hidden" name="api_token" value="$api_token">
                             <input type="hidden" name="id" value="$id">
-                            <table class="table"><thead><tr><td><button class="btn btn-default btn-sm" type="submit">移出</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>商品名</td></tr></thead><tbody></tbody><tfoot></tfoot></table>
+                            <input type="hidden" name="status" value="">
+                            <table class="table"><thead><tr><td><button class="btn btn-default btn-sm btn-passed" type="submit" data-status="5">通过</button><button class="btn btn-default btn-sm btn-rejected" type="submit" data-status="4">拒绝</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>店铺</td><td>规格</td><td>商品名</td></tr></thead><tbody></tbody><tfoot></tfoot></table>
                         </form>
                     </div>
                     <div role="tabpanel" class="tab-pane" id="rejected" data-status="4">
-                        <form id="unjoined-form" action="$action_del_product_to_rule" method="post" enctype="multipart/form-data">
-                            <input type="hidden" name="api_token" value="$api_token">
-                            <input type="hidden" name="id" value="$id">
-                            <table class="table"><thead><tr><td><button class="btn btn-default btn-sm" type="submit">移出</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>商品名</td></tr></thead><tbody></tbody><tfoot></tfoot></table>
-                        </form>
+                        <table class="table"><thead><tr><td></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>店铺</td><td>规格</td><td>商品名</td></tr></thead><tbody></tbody><tfoot></tfoot></table>
                     </div>
                   </div>
             </div>
@@ -338,22 +352,30 @@ class SiteActivityGiftMoney implements ActivityInterface
             $(document).ready(function () {
                 getroles();
                 //从活动中移出，全选反选事件
-                $(document).on('click','#unjoined-form .select-all',function(event){
+                $(document).on('click','div[role="tabpanel"].active .select-all',function(event){
                     if($(this).prop('checked')){
-                        $('#unjoined-form .select-product').prop('checked', true);
+                        $('div[role="tabpanel"].active .select-product').prop('checked', true);
                     }else{
-                        $('#unjoined-form .select-product').prop('checked', false);
+                        $('div[role="tabpanel"].active .select-product').prop('checked', false);
                     }
                 });
-                $(document).on('click','#unjoined-form .select-product',function(event){
-                    changeProductselectAll('#unjoined-form');
+                $(document).on('click','div[role="tabpanel"].active .select-product',function(event){
+                    changeProductselectAll('div[role="tabpanel"].active');
                 });
-                $(document).on('click','.manager-activity-products li[role="presentation"] a',function(e){
+                clickTab();
+            })
+
+            function clickTab(){
+                $(document).undelegate('.manager-activity-products ul li[role="presentation"] a', 'click');
+                $(document).on('click','#pending-review-unjoined-form .btn-passed ,#pending-review-unjoined-form .btn-rejected',function(event){
+                    $('#pending-review-unjoined-form input[name="status"]').val($(this).attr('data-status'));
+                });
+                $(document).delegate('.manager-activity-products ul li[role="presentation"] a', 'click',function(e){
                     e.stopPropagation();
                     data_status = $(this).attr('data-status');
                     getActivityRulesProducts();
                 });
-            })
+            }
 
             var options = {
     		   beforeSubmit: showRequestDelProductToRule,
@@ -362,21 +384,45 @@ class SiteActivityGiftMoney implements ActivityInterface
     		   timeout: 3000
     		}
             //创建使用条件表单
-            $('#unjoined-form').ajaxForm(options);
+            $('#passed-unjoined-form').ajaxForm(options);
             
             function showRequestDelProductToRule(formData, jqForm, options){
             	return true;
             };  
             
             function showResponseDelProductToRule(responseText, statusText){
-            	var data = responseText;console.log(data);
+            	var data = responseText;
             	if(data.status){
                     getActivityRulesProducts(data.rule_id);
             		toastr.success('删除成功');
             	}else{
             		toastr.warning('删除失败');
             	}
-            }   
+            }
+
+            //通过/拒绝
+            var options = {
+    		   beforeSubmit: showRequestChangeStatus,
+    		   success: showResponseChangeStatus,
+    		   dataType: 'json',
+    		   timeout: 3000
+    		}
+            //创建使用条件表单
+            $('#pending-review-unjoined-form').ajaxForm(options);
+            
+            function showRequestChangeStatus(formData, jqForm, options){
+            	return true;
+            };  
+            
+            function showResponseChangeStatus(responseText, statusText){
+            	var data = responseText;
+            	if(data.status){
+                    getActivityRulesProducts(data.rule_id);
+            		toastr.success('删除成功');
+            	}else{
+            		toastr.warning('删除失败');
+            	}
+            }  
 
             function changeProductselectAll(div){
                 var select_all = true;
@@ -438,7 +484,7 @@ class SiteActivityGiftMoney implements ActivityInterface
             };  
             
             function showResponseAddRule(responseText, statusText){
-            	var data = responseText;console.log(data);
+            	var data = responseText;
             	if(data.status){
             		$('.add-rolues').modal('hide');
                     getRules();
@@ -525,15 +571,15 @@ class SiteActivityGiftMoney implements ActivityInterface
                             var products = data.data.data;
                             for(var i in products){
                                 var product = products[i];
-                                html += '<tr><td><input type="checkbox" name="rules_products['+i+'][product_id]" value="'+product.product_id+'" class="select-product"><input type="hidden" name="rules_products['+i+'][product_specification_value_to_product_id]" value="'+product.product_specification_value_to_product_id+'"><input type="hidden" name="rules_products['+i+'][rule_id]" value="'+product.activity_rules_id+'"></td><td>';
+                                html += '<tr><td><input type="checkbox" name="rules_products['+i+'][product_id]" value="'+product.product_id+'" class="select-product"><input type="hidden" name="rules_products['+i+'][product_specification_value_to_product_id]" value="'+product.product_specification_value_to_product_id+'"><input type="hidden" name="rules_products['+i+'][rule_id]" value="'+product.activity_rules_id+'"></td><td>'+product.store_title+'</td><td>';
                                 for(var c in product.specification){
                                     html += c+';'+product.specification[c];
                                 }
                                 html += '</td><td><img src="'+product.thumb_img+'">'+product.title+'</td></tr>';
                             }
-                            pagination(data, '#unjoined-form tfoot', 3);
+                            pagination(data, 'div[role="tabpanel"].active tfoot', 3);
                         }
-                        $('#unjoined-form tbody').html(html);
+                        $('div[role="tabpanel"].active tbody').html(html);
                     }
                 });
             }
@@ -549,7 +595,7 @@ ETO;
         $id = $request->input('id');
         $api_token = $request->input('api_token');
         $site_role = $request->input('site_role', 'sales');
-        $action_product_search_form = url('/api/product/search?width=24&height=24&activity_search=1&id='.$id);
+        $action_product_search_form = url('/api/product/search?width=24&height=24&activity_search=1&id='.$id.'&api_token='.$api_token);
         $action_add_product_to_rule = url('/api/activity/add_product_to_activity_rule?site_role='.$site_role);
         $action_del_product_to_rule = url('/api/activity/del_product_to_activity_rule?site_role='.$site_role);
         echo <<<ETO
@@ -595,7 +641,7 @@ ETO;
                             <input type="hidden" name="api_token" value="$api_token">
                             <input type="hidden" name="activity_id" value="$id">
                             <input type="hidden" name="id" value="$id">
-                            <table class="table"><thead><tr><td><button class="btn btn-default btn-sm" type="submit">加入</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>商品名</td></tr></thead><tbody></tbody><tfoot id="search-product-list-page"></tfoot></table>
+                            <table class="table"><thead><tr><td><button class="btn btn-default btn-sm" type="submit">报名</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>商品名</td></tr></thead><tbody></tbody><tfoot id="search-product-list-page"></tfoot></table>
                         </form>
                     </div>
                   </div>
@@ -608,32 +654,20 @@ ETO;
                 getCategory();
                 getActivityRulesProducts();
                 //添加商品到活动全选反选事件
-                $(document).on('click','#add-rule-products .select-all',function(e){
+                $(document).on('click','div[role="tabpanel"].active .select-all',function(e){
                     e.stopPropagation();
                     if($(this).prop('checked')){
-                        $('#add-rule-products .select-product').prop('checked', true);
+                        $('div[role="tabpanel"].active .select-product').prop('checked', true);
                     }else{
-                        $('#add-rule-products .select-product').prop('checked', false);
+                        $('div[role="tabpanel"].active .select-product').prop('checked', false);
                     }
                 });
-                $(document).on('click','#add-rule-products .select-product',function(e){
+                $(document).on('click','div[role="tabpanel"].active .select-product',function(e){
                     e.stopPropagation();
-                    changeProductselectAll('#add-rule-products');
+                    changeProductselectAll('div[role="tabpanel"].active');
                 });
-                //从活动中移出，全选反选事件
-                $(document).on('click','#unjoined-form .select-all',function(e){
-                    e.stopPropagation();
-                    if($(this).prop('checked')){
-                        $('#unjoined-form .select-product').prop('checked', true);
-                    }else{
-                        $('#unjoined-form .select-product').prop('checked', false);
-                    }
-                });
-                $(document).on('click','#unjoined-form .select-product',function(e){
-                    e.stopPropagation();
-                    changeProductselectAll('#unjoined-form');
-                });
-                $(document).on('click','.modal-activity-manager li[role="presentation"] a',function(e){
+                $(document).undelegate('.modal-activity-manager li[role="presentation"] a','click');
+                $(document).delegate('.modal-activity-manager li[role="presentation"] a','click',function(e){
                     e.stopPropagation();
                     data_status = $(this).attr('data-status');
                     getActivityRulesProducts();
@@ -757,7 +791,7 @@ ETO;
                                 }
                                 html += '</td><td><img src="'+product.thumb_img+'">'+product.title+'</td></tr>';
                             }
-                            $('div[role="tabpanel"][data-status="'+data_status+'"] tbody').html(html);console.log(html);
+                            $('div[role="tabpanel"][data-status="'+data_status+'"] tbody').html(html);
                             pagination(data, 'div[role="tabpanel"][data-status="'+data_status+'"] tfoot', 3);
                         }
                         $('div[role="tabpanel"][data-status="'+data_status+'"] tbody').html(html);
@@ -802,7 +836,7 @@ ETO;
             };
             
             function showResponseDelProductToRule(responseText, statusText){
-            	var data = responseText;console.log(data);
+            	var data = responseText;
             	if(data.status){
                     getActivityRulesProducts(data.rule_id);
             		toastr.success('删除成功');
@@ -882,5 +916,4 @@ ETO;
     public static function queue($request){
         
     }
-    
 }

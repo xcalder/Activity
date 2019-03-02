@@ -73,7 +73,7 @@ class SiteActivitySpike implements ActivityInterface
                 $products[$value['product_specification_value_to_product_id']]['product_id'] = $value['product_id'];
                 $products[$value['product_specification_value_to_product_id']]['product_specification_value_to_product_id'] = $value['product_specification_value_to_product_id'];
                 $products[$value['product_specification_value_to_product_id']]['activity_id'] = $activity_id;
-                $products[$value['product_specification_value_to_product_id']]['status'] = $activity_info['status'];
+                $products[$value['product_specification_value_to_product_id']]['status'] = 3;
                 $products[$value['product_specification_value_to_product_id']]['sales_storage'] = $value['sales_storage'];
                 
                 $products_roles_price[$i]['product_id'] = $value['product_id'];
@@ -133,17 +133,47 @@ class SiteActivitySpike implements ActivityInterface
             $product_id = lumen_array_column($roles_products, 'product_id');
             $product_specification_value_to_product_id = lumen_array_column($roles_products, 'product_specification_value_to_product_id');
             
-            DB::beginTransaction();
-            try{
-                ProductActivityRuleProducts::where('activity_id', $activity_id)->whereIn('product_specification_value_to_product_id', $product_specification_value_to_product_id)->delete();
-                ProductActivityRuleRoles::where('activity_id', $activity_id)->whereIn('product_specification_value_to_product_id', $product_specification_value_to_product_id)->delete();
-                $data['status'] = true;
-                DB::commit();
-            }catch (\Exception $e) {
-                DB::rollBack();
+            if($request->has('status') && in_array($request->input('status', 0), [4, 5])){
+                $status = $request->input('status');
+                $data['status'] = self::_changeActivityProduct($activity_id, $product_specification_value_to_product_id, $status);
+            }else{
+                $data['status'] = self::_delActivityProduct($activity_id, $product_specification_value_to_product_id);
             }
         }
         return $data;
+    }
+    
+    /**
+     * 删除
+     * @param unknown $activity_id
+     * @param unknown $product_specification_value_to_product_id
+     * @return boolean
+     */
+    private static function _delActivityProduct($activity_id, $product_specification_value_to_product_id){
+        DB::beginTransaction();
+        try{
+            ProductActivityRuleProducts::where('activity_id', $activity_id)->whereIn('product_specification_value_to_product_id', $product_specification_value_to_product_id)->delete();
+            ProductActivityRuleRoles::where('activity_id', $activity_id)->whereIn('product_specification_value_to_product_id', $product_specification_value_to_product_id)->delete();
+            DB::commit();
+        }catch (\Exception $e) {
+            DB::rollBack();
+            return false;
+        }
+        return true;
+    }
+    
+    /**
+     * 拒绝
+     * @param unknown $activity_id
+     * @param unknown $product_specification_value_to_product_id
+     * @param unknown $status
+     * @return boolean
+     */
+    private static function _changeActivityProduct($activity_id, $product_specification_value_to_product_id, $status){
+        if(ProductActivityRuleProducts::where('activity_id', $activity_id)->whereIn('product_specification_value_to_product_id', $product_specification_value_to_product_id)->update(['status' => $status])){
+            return true;
+        }
+        return false;
     }
     
     /**
@@ -160,7 +190,6 @@ class SiteActivitySpike implements ActivityInterface
         $id = $request->input('id');
         $api_token = $request->input('api_token');
         $site_role = $request->input('site_role', 'sales');
-        $action_product_search_form = url('/api/product/search?width=24&height=24&activity_search=1&id='.$id);
         $action_add_product_to_rule = url('/api/activity/add_product_to_activity_rule?site_role='.$site_role);
         $action_del_product_to_rule = url('/api/activity/del_product_to_activity_rule?site_role='.$site_role);
         echo <<<ETO
@@ -169,66 +198,66 @@ class SiteActivitySpike implements ActivityInterface
                 <h4>活动商品管理</h4>
                 <!-- Nav tabs -->
                   <ul class="nav nav-tabs" role="tablist">
-                    <li role="presentation" class="active"><a href="#passed" aria-controls="passed" role="tab" data-toggle="tab" >已通过</a></li>
-                    <li role="presentation"><a href="#pending-review" aria-controls="pending-review" role="tab" data-toggle="tab">待审核</a></li>
-                    <li role="presentation"><a href="#rejected" aria-controls="rejected" role="tab" data-toggle="tab">已拒绝</a></li>
+                    <li role="presentation" class="active"><a href="#passed" aria-controls="passed" role="tab" data-toggle="tab" data-status="5">已通过</a></li>
+                    <li role="presentation"><a href="#pending-review" aria-controls="pending-review" role="tab" data-toggle="tab" data-status="3">待审核</a></li>
+                    <li role="presentation"><a href="#rejected" aria-controls="rejected" role="tab" data-toggle="tab" data-status="4">已拒绝</a></li>
                   </ul>
                 
                   <!-- Tab panes -->
                   <div class="tab-content">
-                    <div role="tabpanel" class="tab-pane active" id="passed">
-                        <form id="pending-review-form" action="$action_del_product_to_rule" method="post" enctype="multipart/form-data">
+                    <div role="tabpanel" class="tab-pane active" id="passed" data-status="5">
+                        <form id="passed-form" action="$action_del_product_to_rule" method="post" enctype="multipart/form-data">
                             <input type="hidden" name="api_token" value="$api_token">
                             <input type="hidden" name="id" value="$id">
                             <table class="table"><thead><tr><td><button class="btn btn-default btn-sm" type="submit">移出</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>活动数量</td><td>销量</td><td>角色名</td><td>角色价</td><td>商品名</td></tr></thead><tbody></tbody><tfoot></tfoot></table>
                         </form>
                     </div>
-                    <div role="tabpanel" class="tab-pane" id="pending-review">
+                    <div role="tabpanel" class="tab-pane" id="pending-review" data-status="3">
                         <form id="pending-review-form" action="$action_del_product_to_rule" method="post" enctype="multipart/form-data">
                             <input type="hidden" name="api_token" value="$api_token">
                             <input type="hidden" name="id" value="$id">
-                            <table class="table"><thead><tr><td><button class="btn btn-default btn-sm" type="submit">通过</button><button class="btn btn-default btn-sm" type="submit">拒绝</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>活动数量</td><td>销量</td><td>角色名</td><td>角色价</td><td>商品名</td></tr></thead><tbody></tbody><tfoot></tfoot></table>
+                            <input type="hidden" name="status" value="">
+                            <table class="table"><thead><tr><td><button class="btn btn-default btn-sm btn-passed" type="submit" data-status="5">通过</button><button class="btn btn-default btn-sm btn-rejected" type="submit" data-status="4">拒绝</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>活动数量</td><td>销量</td><td>角色名</td><td>角色价</td><td>商品名</td></tr></thead><tbody></tbody><tfoot></tfoot></table>
                         </form>
                     </div>
-                    <div role="tabpanel" class="tab-pane" id="rejected">
-                        <form id="pending-review-form" action="$action_del_product_to_rule" method="post" enctype="multipart/form-data">
-                            <input type="hidden" name="api_token" value="$api_token">
-                            <input type="hidden" name="id" value="$id">
-                            <table class="table"><thead><tr><td></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>活动数量</td><td>销量</td><td>角色名</td><td>角色价</td><td>商品名</td></tr></thead><tbody></tbody><tfoot></tfoot></table>
-                        </form>
+                    <div role="tabpanel" class="tab-pane" id="rejected" data-status="4">
+                        <input type="hidden" name="api_token" value="$api_token">
+                        <input type="hidden" name="id" value="$id">
+                        <table class="table"><thead><tr><td></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>活动数量</td><td>销量</td><td>角色名</td><td>角色价</td><td>商品名</td></tr></thead><tbody></tbody><tfoot></tfoot></table>
                     </div>
                   </div>
             </div>
           </div>
         <script type="text/javascript">
             var this_roles;
+            var data_status = 5;
             $(document).ready(function () {
                 getroles();
-                
-                //添加商品到活动全选反选事件
-                $(document).on('click','#add-rule-products .select-all',function(event){
-                    if($(this).prop('checked')){
-                        $('#add-rule-products .select-product').prop('checked', true);
-                    }else{
-                        $('#add-rule-products .select-product').prop('checked', false);
-                    }
-                });
-                $(document).on('click','#add-rule-products .select-product',function(event){
-                    changeProductselectAll('#add-rule-products');
-                });
                 //从活动中移出，全选反选事件
-                $(document).on('click','#pending-review-form .select-all',function(event){
+                $(document).on('click','div[role="tabpanel"].active .select-all',function(event){
                     if($(this).prop('checked')){
-                        $('#pending-review-form .select-product').prop('checked', true);
+                        $('div[role="tabpanel"].active .select-product').prop('checked', true);
                     }else{
-                        $('#pending-review-form .select-product').prop('checked', false);
+                        $('div[role="tabpanel"].active .select-product').prop('checked', false);
                     }
                 });
-                $(document).on('click','#pending-review-form .select-product',function(event){
-                    changeProductselectAll('#pending-review-form');
-                });                
-
+                $(document).on('click','div[role="tabpanel"].active .select-product',function(event){
+                    changeProductselectAll('div[role="tabpanel"].active');
+                });
+                clickTab();
             })
+
+            function clickTab(){
+                $(document).undelegate('.manager-activity-products ul li[role="presentation"] a', 'click');
+                $(document).on('click','#pending-review-form .btn-passed ,#pending-review-form .btn-rejected',function(event){
+                    $('#pending-review-form input[name="status"]').val($(this).attr('data-status'));
+                });
+                $(document).delegate('.manager-activity-products ul li[role="presentation"] a', 'click',function(e){
+                    e.stopPropagation();
+                    data_status = $(this).attr('data-status');
+                    getActivityRulesProducts();
+                });
+            }
 
             function changeProductselectAll(div){
                 var select_all = true;
@@ -265,7 +294,7 @@ class SiteActivitySpike implements ActivityInterface
                 $.ajax({
             	    type: 'GET',
             	    url: url+'/api/activity/get_activity_rule_products?site_role=$site_role',
-            	    data: {api_token: api_token,id:$id},
+            	    data: {api_token: api_token,id:$id,status:data_status},
             	    dataType: 'json',
             	    success: function(data){
             	    	if(data.status){
@@ -289,36 +318,13 @@ class SiteActivitySpike implements ActivityInterface
                                 }
                                 e++;
                             }
-                            pagination(data, '#pending-review-form tfoot', 7);
+                            pagination(data, '.manager-activity-products div[role="tabpanel"].active tfoot', 7);
                         }
-                        $('#pending-review-form tbody').html(html);
+                        $('.manager-activity-products div[role="tabpanel"].active tbody').html(html);
                     }
                 });
             }
             
-            var options = {
-    		   beforeSubmit: showRequestAddRuleProduct,
-    		   success: showResponseAddRuleProduct,
-    		   dataType: 'json',
-    		   timeout: 3000
-    		}
-            //添加商品到活动
-            $('#add-rule-products').ajaxForm(options);
-            
-            function showRequestAddRuleProduct(formData, jqForm, options){
-            	return true;
-            };  
-            
-            function showResponseAddRuleProduct(responseText, statusText){
-            	var data = responseText;
-                if(data.status){
-                    getActivityRulesProducts(data.rule_id);
-                    toastr.success('添加成功');
-                }else{
-                    toastr.warning('添加失败');
-                }
-            }
-
             var options = {
     		   beforeSubmit: showRequestDelProductToRule,
     		   success: showResponseDelProductToRule,
@@ -326,7 +332,7 @@ class SiteActivitySpike implements ActivityInterface
     		   timeout: 3000
     		}
             //创建使用条件表单
-            $('#pending-review-form').ajaxForm(options);
+            $('#passed-form').ajaxForm(options);
             
             function showRequestDelProductToRule(formData, jqForm, options){
             	return true;
@@ -342,6 +348,29 @@ class SiteActivitySpike implements ActivityInterface
             	}
             }   
 
+            //审核
+            var options = {
+    		   beforeSubmit: showRequestPendingReview,
+    		   success: showResponsePendingReview,
+    		   dataType: 'json',
+    		   timeout: 3000
+    		}
+            //创建使用条件表单
+            $('#pending-review-form').ajaxForm(options);
+            
+            function showRequestPendingReview(formData, jqForm, options){
+            	return true;
+            };  
+            
+            function showResponsePendingReview(responseText, statusText){
+            	var data = responseText;console.log(data);
+            	if(data.status){
+                    getActivityRulesProducts();
+            		toastr.success('审核成功');
+            	}else{
+            		toastr.warning('审核失败');
+            	}
+            }   
         </script>
 ETO;
     }
@@ -354,7 +383,7 @@ ETO;
         $id = $request->input('id');
         $api_token = $request->input('api_token');
         $site_role = $request->input('site_role', 'sales');
-        $action_product_search_form = url('/api/product/search?width=24&height=24&activity_search=1&id='.$id);
+        $action_product_search_form = url('/api/product/search?width=24&height=24&activity_search=1&id='.$id.'&api_token='.$api_token);
         $action_add_product_to_rule = url('/api/activity/add_product_to_activity_rule?site_role='.$site_role);
         $action_del_product_to_rule = url('/api/activity/del_product_to_activity_rule?site_role='.$site_role);
         echo <<<ETO
@@ -366,25 +395,44 @@ ETO;
                 </form>
                 <!-- Nav tabs -->
                   <ul class="nav nav-tabs" role="tablist">
-                    <li role="presentation" class="active"><a href="#joined" aria-controls="joined" role="tab" data-toggle="tab" >已加入</a></li>
-                    <li role="presentation"><a href="#not-joined" aria-controls="not-joined" role="tab" data-toggle="tab">未加入</a></li>
+                    <li role="presentation" class="active"><a href="#passed" aria-controls="passed" role="tab" data-toggle="tab" data-status="5">已通过</a></li>
+                    <li role="presentation"><a href="#pending-review" aria-controls="pending-review" role="tab" data-toggle="tab" data-status="3">待审核</a></li>
+                    <li role="presentation"><a href="#rejected" aria-controls="rejected" role="tab" data-toggle="tab" data-status="4">未通过</a></li>
+                    <li role="presentation"><a href="#not-joined" aria-controls="not-joined" role="tab" data-toggle="tab">报名</a></li>
                   </ul>
                   
                   <!-- Tab panes -->
                   <div class="tab-content">
-                    <div role="tabpanel" class="tab-pane active" id="joined">
+                    <div role="tabpanel" class="tab-pane active" id="passed" data-status="5">
                         <form id="unjoined-form" action="$action_del_product_to_rule" method="post" enctype="multipart/form-data">
                             <input type="hidden" name="api_token" value="$api_token">
                             <input type="hidden" name="id" value="$id">
                             <table class="table"><thead><tr><td><button class="btn btn-default btn-sm" type="submit">移出</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>活动数量</td><td>销量</td><td>角色名</td><td>角色价</td><td>商品名</td></tr></thead><tbody></tbody><tfoot></tfoot></table>
                         </form>
                     </div>
+
+                    <div role="tabpanel" class="tab-pane" id="pending-review" data-status="3">
+                        <form id="unjoined-form" action="$action_del_product_to_rule" method="post" enctype="multipart/form-data">
+                            <input type="hidden" name="api_token" value="$api_token">
+                            <input type="hidden" name="id" value="$id">
+                            <table class="table"><thead><tr><td><button class="btn btn-default btn-sm" type="submit">移出</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>活动数量</td><td>销量</td><td>角色名</td><td>角色价</td><td>商品名</td></tr></thead><tbody></tbody><tfoot></tfoot></table>
+                        </form>
+                    </div>
+
+                    <div role="tabpanel" class="tab-pane"  id="rejected" data-status="4">
+                        <form id="unjoined-form" action="$action_del_product_to_rule" method="post" enctype="multipart/form-data">
+                            <input type="hidden" name="api_token" value="$api_token">
+                            <input type="hidden" name="id" value="$id">
+                            <table class="table"><thead><tr><td><button class="btn btn-default btn-sm" type="submit">移出</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>活动数量</td><td>销量</td><td>角色名</td><td>角色价</td><td>商品名</td></tr></thead><tbody></tbody><tfoot></tfoot></table>
+                        </form>
+                    </div>
+                    
                     <div role="tabpanel" class="tab-pane" id="not-joined">
                         <form id="add-rule-products" method="post" enctype="multipart/form-data" action="$action_add_product_to_rule">
                             <input type="hidden" name="api_token" value="$api_token">
                             <input type="hidden" name="activity_id" value="$id">
                             <input type="hidden" name="id" value="$id">
-                            <table class="table"><thead><tr><td><button class="btn btn-default btn-sm" type="submit">加入</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>活动数量</td><td>角色名</td><td>角色价</td><td>商品名</td></tr></thead><tbody></tbody><tfoot id="search-product-list-page"></tfoot></table>
+                            <table class="table"><thead><tr><td><button class="btn btn-default btn-sm" type="submit">报名</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>活动数量</td><td>角色名</td><td>角色价</td><td>商品名</td></tr></thead><tbody></tbody><tfoot id="search-product-list-page"></tfoot></table>
                         </form>
                     </div>
                   </div>
@@ -392,6 +440,7 @@ ETO;
           </div>
         <script type="text/javascript">
             var this_roles;
+            var data_status = 5;
             $(document).ready(function () {
                 getroles();
                 getBrand();
@@ -419,7 +468,12 @@ ETO;
                 $(document).on('click','#unjoined-form .select-product',function(event){
                     changeProductselectAll('#unjoined-form');
                 });
-                
+                $(document).undelegate('.modal-activity-manager li[role="presentation"] a','click');
+                $(document).delegate('.modal-activity-manager li[role="presentation"] a','click',function(e){
+                    e.stopPropagation();
+                    data_status = $(this).attr('data-status');
+                    getActivityRulesProducts();
+                });
             })
             
             function changeProductselectAll(div){
@@ -543,7 +597,7 @@ ETO;
                 $.ajax({
             	    type: 'GET',
             	    url: url+'/api/activity/get_activity_rule_products?site_role=$site_role',
-            	    data: {api_token: api_token,id:$id},
+            	    data: {api_token: api_token,id:$id,status:data_status},
             	    dataType: 'json',
             	    success: function(data){
             	    	if(data.status){
@@ -639,7 +693,8 @@ ETO;
         $data['status'] =  false;
         
         $rules = [
-            'id' => 'required'
+            'id' => 'required',
+            'status' => 'required'
         ];
         $validation = new Validation();
         $result = $validation->return($request, $rules);
@@ -654,7 +709,7 @@ ETO;
         $activity_id = $request->input('id');
         $result = ProductActivityRuleProducts::with(['rolesPrice'])->join('product_version as pv', function($join){
             $join->on('pv.product_id', '=', 'product_activity_rule_products.product_id')->on('pv.product_specification_value_to_product_id', '=', 'product_activity_rule_products.product_specification_value_to_product_id');
-        })->where('product_activity_rule_products.activity_id', $activity_id)->select(['pv.product_id', 'pv.title', 'pv.specification', 'pv.img', 'product_activity_rule_products.activity_id', 'product_activity_rule_products.activity_rules_id', 'product_activity_rule_products.product_specification_value_to_product_id', 'product_activity_rule_products.sales_storage', 'product_activity_rule_products.sales_volume'])->paginate(env('PAGE_LIMIT', 25))->toArray();
+        })->where('product_activity_rule_products.activity_id', $activity_id)->where('status', $request->input('status', 3))->select(['pv.product_id', 'pv.title', 'pv.specification', 'pv.img', 'product_activity_rule_products.activity_id', 'product_activity_rule_products.activity_rules_id', 'product_activity_rule_products.product_specification_value_to_product_id', 'product_activity_rule_products.sales_storage', 'product_activity_rule_products.sales_volume'])->paginate(env('PAGE_LIMIT', 25))->toArray();
         
         if(!empty($result['data'])){
             $roles_price = '';

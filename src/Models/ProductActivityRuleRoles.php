@@ -24,4 +24,12 @@ class ProductActivityRuleRoles extends Model
     protected $hidden = [
         
     ];
+    
+    /**
+     * 禁止自动更新日期时间
+     * @return NULL
+     */
+    public function getUpdatedAtColumn(){
+        return null;
+    }
 }

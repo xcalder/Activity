@@ -38,7 +38,7 @@ class Server
         if(!empty($this->products)){
             return $this->products;
         }
-        $this->products = ProductActivityRuleProducts::whereIn('product_id', $product_ids)->whereIn('product_specification_value_to_product_id', $product_specification_value_to_product_ids)->whereIn('status', [0, 1])->get()->toArray();
+        $this->products = ProductActivityRuleProducts::whereIn('product_id', $product_ids)->whereIn('product_specification_value_to_product_id', $product_specification_value_to_product_ids)->whereIn('status', [0, 1, 5])->get()->toArray();
         $this->activity_ids = lumen_array_column($this->products, 'activity_id');
         return $this->products;
     }

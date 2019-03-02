@@ -29,4 +29,12 @@ class ProductActivityRules extends Model
     {
         return $this->hasMany('Activity\Models\ProductActivityRuleRoles', 'activity_rules_id', 'id');
     }
+    
+    /**
+     * 禁止自动更新日期时间
+     * @return NULL
+     */
+    public function getUpdatedAtColumn(){
+        return null;
+    }
 }

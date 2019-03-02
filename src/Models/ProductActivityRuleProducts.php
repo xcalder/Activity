@@ -34,4 +34,12 @@ class ProductActivityRuleProducts extends Model
     {
         return $this->hasMany('Activity\Models\ProductActivityRuleRoles', 'product_specification_value_to_product_id', 'product_specification_value_to_product_id');
     }
+    
+    /**
+     * 禁止自动更新日期时间
+     * @return NULL
+     */
+    public function getUpdatedAtColumn(){
+        return null;
+    }
 }
