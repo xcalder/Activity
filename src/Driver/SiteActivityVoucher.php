@@ -250,7 +250,7 @@ class SiteActivityVoucher implements ActivityInterface
                                 <tr><td class="w-260-g">规则</td><td>角色</td><td>操作</td></tr>
                             </thead>
                             <tbody id="OrderActivityFullDelivery-rules"></tbody>
-                            <tfoot><tr><td colspan="3" class="text-right"><button class="btn btn-success btn-sm" type="button" onclick="add_rules();">添加</button></td></tr></tfoot>
+                            <tfoot><tr><td colspan="3" class="text-right"><button class="btn btn-success btn-sm mr-2" type="button" onclick="manager_activity_products($id);">商品管理</button><button class="btn btn-success btn-sm" type="button" onclick="add_rules();">添加</button></td></tr></tfoot>
                         </table>
                     </div>
             </div>
@@ -482,7 +482,6 @@ class SiteActivityVoucher implements ActivityInterface
                                     html += '<td>';
                                     
                                     html += '<div class="btn-group" role="group">';
-                                    html += '<button type="button" class="btn btn-default" onclick="manager_activity_products('+rule.id+');">商品管理</button>';
                                     html += '<button type="button" class="btn btn-default" onclick="delete_rule('+rule.id+');">删除</button>';
                                     html += '</div>';
 

@@ -45,7 +45,7 @@ class IndexController extends BaseController
             $rule_ids = array_unique(array_filter($rule_ids));
             $roles = ProductActivityRuleRoles::whereIn('product_activity_rule_roles.activity_rules_id', $rule_ids)->join('users_roles as ur', function($join){
                 $join->on('ur.id', '=', 'product_activity_rule_roles.role_id');
-            })->select(['ur.tag', 'ur.id', 'product_activity_rule_roles.activity_rules_id'])->groupBy('ur.id')->get();
+            })->select(['ur.tag', 'ur.id', 'product_activity_rule_roles.activity_rules_id'])->get();
             
             $data['roles'] = $roles;
             $data['data'] = $result;
