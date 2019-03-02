@@ -234,7 +234,7 @@ class OrderActivityFullDelivery implements ActivityInterface
         $id = $request->input('id');
         $site_role = $request->input('site_role', 'sales');
         $api_token = $request->input('api_token');
-        $action_product_search_form = url('/api/product/search?width=24&height=24&activity_search=1&id='.$id.'&api_token='.$api_token);
+        $action_product_search_form = url('/api/product/search?width=24&height=24&activity_search=1&type=0&id='.$id.'&api_token='.$api_token);
         $action_add_product_to_rule = url('/api/activity/add_product_to_activity_rule?site_role='.$site_role);
         $action_del_product_to_rule = url('/api/activity/del_product_to_activity_rule?site_role='.$site_role);
         echo <<<ETO
