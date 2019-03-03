@@ -19,6 +19,8 @@ class Server
     
     private $activity_ids = [];
     
+    private $array_config = [];
+    
     /**
      * 取未开始/进行中的活动
      */
@@ -40,6 +42,23 @@ class Server
         }
         $this->products = ProductActivityRuleProducts::whereIn('product_id', $product_ids)->whereIn('product_specification_value_to_product_id', $product_specification_value_to_product_ids)->whereIn('status', [0, 1, 3,5])->get()->toArray();
         $this->activity_ids = lumen_array_column($this->products, 'activity_id');
+        return $this->products;
+    }
+    
+    /**
+     * 取正在活动中的商品
+     * @param unknown $product_ids
+     * @param unknown $product_specification_value_to_product_ids
+     * @return unknown
+     */
+    public function getRuningProducts($product_ids, $product_specification_value_to_product_ids){
+        if(!empty($this->products)){
+            return $this->products;
+        }
+        $this->products = ProductActivityRuleProducts::join('product_activity as pa', function($join){
+            $join->on('pa.id', '=', 'product_activity_rule_products.activity_id');
+        })->whereIn('product_activity_rule_products.product_id', $product_ids)->whereIn('product_activity_rule_products.product_specification_value_to_product_id', $product_specification_value_to_product_ids)->where('product_activity_rule_products.status', 6)->select(['pa.id', 'pa.tag', 'pa.tag_img','product_activity_rule_products.product_id'])->get()->toArray();
+        //$this->activity_ids = lumen_array_column($this->products, 'activity_id');
         return $this->products;
     }
     
@@ -75,6 +94,49 @@ class Server
     
     public function getActivityIds(){
         return $this->activity_ids;
+    }
+    
+    public function checkoutActivityToProductList($request){
+        if(empty($request['data'])){
+            return $request;
+        }
+        $this->getProductIds($request);
+        $this->getProductSpecificationValueToProductIds($request);
+        $products = $this->getRuningProducts($this->product_ids, $this->product_specification_value_to_product_ids);
+        
+        if(empty($products)){
+            foreach ($request['data'] as $key=>$value){
+                $request['data'][$key]['activitys'] = [];
+            }
+            return $request;
+        }
+        
+        //$activity_config = config('all_status.activity');
+        //$this->getActivityNames($activity_config);
+        /*
+        foreach ($products as $key=>$value){
+            $products[$key]['activity_name'] = $this->array_config[$value['activity_type']];
+        }
+        */
+        $products = array_under_reset($products, 'product_id', 2);
+        
+        foreach ($request['data'] as $key=>$value){
+            //$request['data'][$key]['activitys'] = array_under_reset($products[$value['id']] ?? [], 'activity_type') ?? [];
+            $request['data'][$key]['activitys'] = $products[$value['id']] ?? [];
+        }
+        return $request;
+    }
+    
+    private function getActivityNames($activity_config){
+        if(!empty($activity_config)){
+            foreach ($activity_config as $key=>$value){
+                if(is_array($value) && !isset($value['name'])){
+                    $this->getActivityNames($value);
+                }else{
+                    $this->array_config[$value['type']] = $value['name'];
+                }
+            }
+        }
     }
     
     public function checkoutDateTimeCoincide($request, $id){

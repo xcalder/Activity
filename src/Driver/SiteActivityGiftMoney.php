@@ -166,6 +166,7 @@ class SiteActivityGiftMoney implements ActivityInterface
                 $products[$i]['product_specification_value_to_product_id'] = $value['product_specification_value_to_product_id'];
                 $products[$i]['activity_id'] = $activity_id;
                 $products[$i]['status'] = 3;
+                $products[$i]['activity_type'] = $activity_info['type'];
                 $i++;
             }
         }

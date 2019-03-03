@@ -75,6 +75,7 @@ class ProductActivityLimitDiscounts implements ActivityInterface
                 $products[$value['product_specification_value_to_product_id']]['activity_id'] = $activity_id;
                 $products[$value['product_specification_value_to_product_id']]['status'] = $activity_info['status'];
                 $products[$value['product_specification_value_to_product_id']]['sales_storage'] = $value['sales_storage'];
+                $products[$value['product_specification_value_to_product_id']]['activity_type'] = $activity_info['type'];
                 
                 $products_roles_price[$i]['product_id'] = $value['product_id'];
                 $products_roles_price[$i]['role_id'] = $value['role_id'];

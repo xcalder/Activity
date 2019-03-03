@@ -2,10 +2,12 @@
 
 namespace Activity;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Activity\Models\ProductActivityRules;
 use Activity\Models\ProductActivityRuleRoles;
 use Activity\Models\ProductActivityRuleProducts;
+use App\Models\Product;
 use App\Service\ToolsService;
 use Activity\Models\ProductActivity;
 
@@ -14,7 +16,7 @@ use Activity\Models\ProductActivity;
  * @author xcalder
  *
  */
-class OrderActivityFullDelivery implements ActivityInterface
+class ProductActivityPackage implements ActivityInterface
 {
     /**
      * 添加规则
@@ -25,7 +27,8 @@ class OrderActivityFullDelivery implements ActivityInterface
         
         $rules = [
             'id' => 'required',
-            'limit' => 'required',
+            'title' => 'required',
+            'price' => 'required',
             'roles' => 'required|array'
         ];
         $validation = new Validation();
@@ -38,8 +41,17 @@ class OrderActivityFullDelivery implements ActivityInterface
         $id = $request->input('id');
         $insert = [];
         $insert['activity_id'] = $id;
-        $insert['limit'] = $request->input('limit');
+        $insert['price'] = $request->input('price');
         $roles = $request->input('roles');
+        $insert_product = [];
+        $insert_product['title'] = $request->input('title');
+        $insert_product['description'] = $request->input('description');
+        $insert_product['img'] = $request->input('img');
+        $insert_product['price'] = $request->input('price');
+        $insert_product['status'] = $request->input('status');
+        
+        $user = Auth::user();
+        $store_id = $user['store_id'];
         
         DB::beginTransaction();
         try{
@@ -47,6 +59,11 @@ class OrderActivityFullDelivery implements ActivityInterface
             if(empty($activity_info)){
                 return response()->json($data);
             }
+            $insert_product['store_id'] = $store_id;
+            $insert['store_id'] = $store_id;
+            $insert_product['type'] = 1;
+            $product_id = Product::insertGetId($insert_product);
+            $insert['product_id'] = $product_id;
             $insert['status'] = $activity_info['status'];
             $activity_rules_id = ProductActivityRules::insertGetId($insert);
             $insert_role = [];
@@ -86,7 +103,15 @@ class OrderActivityFullDelivery implements ActivityInterface
         }
         
         $id = $request->input('id');
-        $result = ProductActivityRules::with('roles')->where('activity_id', $id)->get();
+        $result = ProductActivityRules::with('roles')->join('product as p', function($join){
+            $join->on('p.id', '=', 'product_activity_rules.product_id');
+        })->where('activity_id', $id)->select(['p.title', 'p.description', 'p.img', 'p.price', 'p.status', 'product_activity_rules.id', 'product_activity_rules.activity_id', 'product_activity_rules.product_id'])->get()->toArray();
+        if(!empty($result)){
+            $tools_service = new ToolsService();
+            foreach ($result as $key=>$value){
+                $result[$key]['thumb_img'] = $tools_service->serviceResize($value['img'], 24, 24);
+            }
+        }
         $data['status'] = true;
         $data['data'] = $result;
         return response()->json($data);
@@ -235,9 +260,10 @@ class OrderActivityFullDelivery implements ActivityInterface
         $id = $request->input('id');
         $site_role = $request->input('site_role', 'sales');
         $api_token = $request->input('api_token');
-        $action_product_search_form = url('/api/product/search?width=24&height=24&activity_search=1&type=0&id='.$id.'&api_token='.$api_token);
+        $action_product_search_form = url('/api/product/search?width=24&height=24&type=0&id='.$id.'&api_token='.$api_token);
         $action_add_product_to_rule = url('/api/activity/add_product_to_activity_rule?site_role='.$site_role);
         $action_del_product_to_rule = url('/api/activity/del_product_to_activity_rule?site_role='.$site_role);
+        $default_img = url('storage/images/default.jpg');
         echo <<<ETO
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content p-3">
@@ -245,10 +271,10 @@ class OrderActivityFullDelivery implements ActivityInterface
                     <div class="row">
                         <table class="table mb-0">
                             <thead>
-                                <tr><td class="w-260-g">金额限制</td><td>角色</td><td>操作</td></tr>
+                                <tr><td>套餐名</td><td>角色</td><td>价格</td><td>操作</td></tr>
                             </thead>
                             <tbody id="OrderActivityFullDelivery-rules"></tbody>
-                            <tfoot><tr><td colspan="3" class="text-right"><button class="btn btn-success btn-sm" type="button" onclick="add_rules();">添加</button></td></tr></tfoot>
+                            <tfoot><tr><td colspan="4" class="text-right"><button class="btn btn-success btn-sm" type="button" onclick="add_rules();">添加套餐</button></td></tr></tfoot>
                         </table>
                     </div>
             </div>
@@ -260,16 +286,39 @@ class OrderActivityFullDelivery implements ActivityInterface
                   <input type="hidden" name="api_token" value="$api_token">
                   <input type="hidden" name="id" value="$id">
                   <div class="form-group">
-                    <label for="limit">金额限制</label>
-                    <div class="input-group">
-                      <span class="input-group-addon">满￥</span>
-                      <input type="text" class="form-control" name="limit" value="0.00">
-                      <span class="input-group-addon">.00</span>
-                    </div>
+                    <label for="title">套餐名</label>
+                    <input type="text" id="title" class="form-control" name="title" value="">
+                  </div>
+                  <div class="form-group">
+                    <label for="description">描述</label>
+                    <input type="text" id="description" class="form-control" name="description" value="">
+                  </div>
+                  <div class="form-group">
+                    <label for="price">价格</label>
+                    <input type="text" id="price" class="form-control" name="price" value="0.00">
+                  </div>
+                  <div class="form-group">
+                    <label for="img" class="btn-block">主图</label>
+                    <a data-toggle="image" class="img-thumbnail">
+                		<img class="w-h-80" src="$default_img" data-placeholder="$default_img">
+                		<input type="hidden" name="img" value="">
+                	</a>
+            		<p class="help-block">点击图片选择</p>
                   </div>
                   <div class="form-group">
                     <label for="roles" class="btn-block">角色</label>
                     <div class="allowed-role"></div>
+                  </div>
+                  <div class="form-group">
+                    <label for="status" class="btn-block">状态</label>
+                    <div class="package-status">
+                        <label class="radio-inline">
+                          <input type="radio" name="status" value="1" checked>上架
+                        </label>
+                        <label class="radio-inline">
+                          <input type="radio" name="status" value="0">下架
+                        </label>
+                    </div>
                   </div>
                   <button type="submit" class="btn btn-default btn-block">提交</button>
                 </form>
@@ -446,7 +495,7 @@ class OrderActivityFullDelivery implements ActivityInterface
                                 for(var i in data.data){
                                     var rule = data.data[i];
                                     html += '<tr>';
-                                    html += '<td>满￥'+rule.limit+'送</td>';
+                                    html += '<td><img src="'+rule.thumb_img+'">'+rule.title+'</td>';
                                     html += '<td>';
                                     if(!isEmpty(rule.roles) && !isEmpty(this_roles)){
                                         for(var d in this_roles){
@@ -460,6 +509,7 @@ class OrderActivityFullDelivery implements ActivityInterface
                                         }
                                     }
                                     html += '</td>';
+                                    html += '<td>'+rule.price+'</td>';
                                     html += '<td>';
                                     
                                     html += '<div class="btn-group" role="group">';

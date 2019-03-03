@@ -167,7 +167,8 @@ class ProductActivityIncrEasePriceRedemption implements ActivityInterface
                 $products[$i]['activity_id'] = $activity_id;
                 $products[$i]['activity_rules_id'] = $rule_id;
                 $products[$i]['status'] = $activity_info['status'];
-                $products[$i]['type'] = $type;
+                $products[$i]['activity_type'] = $activity_info['type'];
+                $products[$i]['rule_product_type'] = $type;
                 $i++;
             }
         }
@@ -221,7 +222,7 @@ class ProductActivityIncrEasePriceRedemption implements ActivityInterface
             $activity_rule_id = lumen_array_column($roles_products, 'rule_id')[0];
             $product_id = lumen_array_column($roles_products, 'product_id');
             $product_specification_value_to_product_id = lumen_array_column($roles_products, 'product_specification_value_to_product_id');
-            if(ProductActivityRuleProducts::where('type', $type)->where('activity_id', $activity_id)->where('activity_rules_id', $activity_rule_id)->whereIn('product_specification_value_to_product_id', $product_specification_value_to_product_id)->delete()){
+            if(ProductActivityRuleProducts::where('rule_product_type', $type)->where('activity_id', $activity_id)->where('activity_rules_id', $activity_rule_id)->whereIn('product_specification_value_to_product_id', $product_specification_value_to_product_id)->delete()){
                 $data['type'] = $type;
                 $data['status'] = true;
                 $data['rule_id'] = $activity_rule_id;
@@ -702,7 +703,7 @@ ETO;
         
         $result = ProductActivityRuleProducts::join('product_version as pv', function($join){
             $join->on('pv.product_id', '=', 'product_activity_rule_products.product_id')->on('pv.product_specification_value_to_product_id', '=', 'product_activity_rule_products.product_specification_value_to_product_id');
-        })->where('product_activity_rule_products.type', $type)->where('product_activity_rule_products.activity_id', $activity_id)->where('product_activity_rule_products.activity_rules_id', $rule_id)->select(['pv.product_id', 'pv.title', 'pv.specification', 'pv.img', 'product_activity_rule_products.activity_id', 'product_activity_rule_products.activity_rules_id', 'product_activity_rule_products.product_specification_value_to_product_id'])->paginate(env('PAGE_LIMIT', 25))->toArray();
+        })->where('product_activity_rule_products.rule_product_type', $type)->where('product_activity_rule_products.activity_id', $activity_id)->where('product_activity_rule_products.activity_rules_id', $rule_id)->select(['pv.product_id', 'pv.title', 'pv.specification', 'pv.img', 'product_activity_rule_products.activity_id', 'product_activity_rule_products.activity_rules_id', 'product_activity_rule_products.product_specification_value_to_product_id'])->paginate(env('PAGE_LIMIT', 25))->toArray();
         
         if(!empty($result['data'])){
             $data['status'] = true;

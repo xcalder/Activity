@@ -23,6 +23,11 @@ class ActivityManager extends Manager implements Factory
         return $this->buildProvider(SiteActivityGiftMoney::class);
     }
     
+    protected function createProductActivityPackageDriver()
+    {
+        return $this->buildProvider(ProductActivityPackage::class);
+    }
+    
     protected function createSiteActivitySpikeDriver()
     {
         return $this->buildProvider(SiteActivitySpike::class);

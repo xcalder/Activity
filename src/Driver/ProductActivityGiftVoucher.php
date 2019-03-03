@@ -169,6 +169,7 @@ class ProductActivityGiftVoucher implements ActivityInterface
                 $products[$i]['activity_id'] = $activity_id;
                 $products[$i]['activity_rules_id'] = $rule_id;
                 $products[$i]['status'] = $activity_info['status'];
+                $products[$i]['activity_type'] = $activity_info['type'];
                 $i++;
             }
         }

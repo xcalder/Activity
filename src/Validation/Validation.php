@@ -17,14 +17,16 @@ class Validation
     }
     
     public function addActivity($request){
+        $date = date("Y-m-d");
+        $start_time = $request->input('started_at', $date);
         $rules = [
             'api_token' => 'required',
             'title' => 'required',
             'description' => 'required',
             'tag' => 'required',
             'tag_img' => 'required',
-            'started_at' => 'required',
-            'ended_at' => 'required'
+            'started_at' => "required|date_format:Y-m-d H:i:s|after_or_equal:$date",
+            'ended_at' => "required|date_format:Y-m-d H:i:s|after_or_equal:$start_time"
         ];
         if(empty($request->input('id'))){
             $rules['type'] = 'required';
