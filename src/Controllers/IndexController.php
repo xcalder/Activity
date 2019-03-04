@@ -31,7 +31,7 @@ class IndexController extends BaseController
             $site_activity_status = config('all_status.site_activity_status');
             $rule_ids = [];
             foreach ($result['data'] as $key=>$value){
-                $result['data'][$key]['status_text'] = $site_activity_status[$value['status']];
+                $result['data'][$key]['status_text'] = $site_activity_status[$value['status']] ?? '';
                 $result['data'][$key]['type_text'] = $site_activity_config[$value['type']]['name'];
                 $rule_text = $site_activity_config[$value['type']]['rule_text'];
                 if(!empty($value['rules'])){
