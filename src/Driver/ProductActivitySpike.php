@@ -361,9 +361,9 @@ class ProductActivitySpike implements ActivityInterface
                                 for(var d in product.roles_price){
                                     var role = product.roles_price[d];
                                     html += '<tr><td><input type="checkbox" name="rules_products['+i+'][product_id]" value="'+product.product_id+'" class="select-product"><input type="hidden" name="rules_products['+i+'][product_specification_value_to_product_id]" value="'+product.product_specification_value_to_product_id+'"><input type="hidden" name="rules_products['+i+'][rule_id]" value="'+product.activity_rules_id+'"></td><td>';
-                                    for(var c in product.specification){
-                                        html += c+';'+product.specification[c];
-                                    }
+                                    
+                                    html += product.specification.specification_title+product.specification.specification_value_title;
+
                                     html += '</td><td>'+product.sales_storage+'</td><td>'+product.sales_volume+'</td>';
                                     for(var b in this_roles){
                                         if(this_roles[b].id == role.role_id){

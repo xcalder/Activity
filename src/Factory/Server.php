@@ -57,7 +57,7 @@ class Server
         }
         $this->products = ProductActivityRuleProducts::join('product_activity as pa', function($join){
             $join->on('pa.id', '=', 'product_activity_rule_products.activity_id');
-        })->whereIn('product_activity_rule_products.product_id', $product_ids)->whereIn('product_activity_rule_products.product_specification_value_to_product_id', $product_specification_value_to_product_ids)->where('product_activity_rule_products.status', 6)->select(['pa.id', 'pa.tag', 'pa.tag_img','product_activity_rule_products.product_id'])->get()->toArray();
+        })->where('product_activity_rule_products.rule_product_type', 1)->whereIn('product_activity_rule_products.product_id', $product_ids)->whereIn('product_activity_rule_products.product_specification_value_to_product_id', $product_specification_value_to_product_ids)->where('product_activity_rule_products.status', 6)->select(['pa.id', 'product_activity_rule_products.activity_id', 'pa.tag', 'pa.tag_img','product_activity_rule_products.product_id'])->get()->toArray();
         //$this->activity_ids = lumen_array_column($this->products, 'activity_id');
         return $this->products;
     }
@@ -110,20 +110,24 @@ class Server
             }
             return $request;
         }
-        
-        //$activity_config = config('all_status.activity');
-        //$this->getActivityNames($activity_config);
-        /*
-        foreach ($products as $key=>$value){
-            $products[$key]['activity_name'] = $this->array_config[$value['activity_type']];
-        }
-        */
         $products = array_under_reset($products, 'product_id', 2);
-        
+        if(!empty($products)){
+            foreach ($products as $key=>$value){
+                $products[$key] = array_under_reset($value, 'activity_id');
+            }
+        }
         foreach ($request['data'] as $key=>$value){
-            //$request['data'][$key]['activitys'] = array_under_reset($products[$value['id']] ?? [], 'activity_type') ?? [];
             $request['data'][$key]['activitys'] = $products[$value['id']] ?? [];
         }
+        return $request;
+    }
+    
+    public function checkoutActivityToProduct($request){
+        if(empty($request)){
+            return $request;
+        }
+        $activitys =  ProductActivityRuleProducts::where('product_id', $request['id'])->where('status', 6)->where('rule_product_type', 1)->get();
+        $request['activitys'] = $activitys;
         return $request;
     }
     

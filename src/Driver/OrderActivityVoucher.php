@@ -3,6 +3,7 @@
 namespace Activity;
 
 use Illuminate\Support\Facades\DB;
+use Activity\Models\ProductActivity;
 use Activity\Models\ProductActivityRules;
 use Activity\Models\ProductActivityRuleRoles;
 use Activity\Models\ProductActivityRuleProducts;

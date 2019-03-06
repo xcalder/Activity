@@ -539,9 +539,9 @@ class ProductActivityGiftMoney implements ActivityInterface
                             for(var i in products){
                                 var product = products[i];
                                 html += '<tr><td><input type="checkbox" name="rules_products['+i+'][product_id]" value="'+product.product_id+'" class="select-product"><input type="hidden" name="rules_products['+i+'][product_specification_value_to_product_id]" value="'+product.product_specification_value_to_product_id+'"><input type="hidden" name="rules_products['+i+'][rule_id]" value="'+product.activity_rules_id+'"></td><td>';
-                                for(var c in product.specification){
-                                    html += c+';'+product.specification[c];
-                                }
+                                
+                                html += product.specification.specification_title+product.specification.specification_value_title;
+
                                 html += '</td><td><img src="'+product.thumb_img+'">'+product.title+'</td></tr>';
                             }
                             pagination(data, '#unjoined-form tfoot', 3);
