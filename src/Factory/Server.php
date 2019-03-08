@@ -52,7 +52,7 @@ class Server
      * @return unknown
      */
     public function getRuningProducts($product_ids, $product_specification_value_to_product_ids){
-        if(!empty($this->products)){
+        if(empty($this->products)){
             return $this->products;
         }
         $this->products = ProductActivityRuleProducts::join('product_activity as pa', function($join){
