@@ -62,7 +62,11 @@ class ProductActivityPackage implements ActivityInterface
             $insert_product['store_id'] = $store_id;
             $insert['store_id'] = $store_id;
             $insert_product['type'] = 1;
-            $product_id = Product::insertGetId($insert_product);
+            $product = new Product($insert_product);
+            $product->save();
+            $product_id = $product->id;
+            //$product_id = Product::insertGetId($insert_product);
+            
             $insert['product_id'] = $product_id;
             $insert['status'] = $activity_info['status'];
             $activity_rules_id = ProductActivityRules::insertGetId($insert);
@@ -160,7 +164,8 @@ class ProductActivityPackage implements ActivityInterface
         $rules = [
             'id' => 'required',
             'rule_id' => 'required',
-            'activity_id' => 'required'
+            'activity_id' => 'required',
+            'type' => 'required'
         ];
         $validation = new Validation();
         $result = $validation->return($request, $rules);
@@ -189,6 +194,7 @@ class ProductActivityPackage implements ActivityInterface
                 $products[$i]['activity_rules_id'] = $rule_id;
                 $products[$i]['status'] = $activity_info['status'];
                 $products[$i]['activity_type'] = $activity_info['type'];
+                $products[$i]['rule_product_type'] = $request->input('type');
                 $i++;
             }
         }
@@ -354,6 +360,7 @@ class ProductActivityPackage implements ActivityInterface
                             <input type="hidden" name="activity_id" value="$id">
                             <input type="hidden" name="id" value="$id">
                             <input type="hidden" name="rule_id" value="">
+                            <input type="hidden" name="type" value="2">
                             <table class="table"><thead><tr><td><button class="btn btn-default btn-sm" type="submit">加入</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>商品名</td></tr></thead><tbody></tbody><tfoot id="search-product-list-page"></tfoot></table>
                         </form>
                     </div>

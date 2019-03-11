@@ -26,10 +26,9 @@ class ProductActivityRuleRoles extends Model
     ];
     
     /**
-     * 禁止自动更新日期时间
-     * @return NULL
+     * 表明模型是否应该被打上时间戳
+     *
+     * @var bool
      */
-    public function getUpdatedAtColumn(){
-        return null;
-    }
+    public $timestamps = false;
 }

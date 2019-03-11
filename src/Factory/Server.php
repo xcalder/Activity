@@ -33,7 +33,7 @@ class Server
             return $this->activity;
         }
         $activity_ids[] = $this->id;
-        $this->activity = ProductActivity::whereIn('id', $activity_ids)->whereIn('status', [0, 1])->get()->toArray();
+        $this->activity = ProductActivity::whereIn('id', $activity_ids)->whereIn('status', [0, 1, 6])->get()->toArray();
         return $this->activity;
     }
 
@@ -44,7 +44,7 @@ class Server
         if(!empty($this->products)){
             return $this->products;
         }
-        $this->products = ProductActivityRuleProducts::whereIn('product_id', $product_ids)->whereIn('product_specification_value_to_product_id', $product_specification_value_to_product_ids)->whereIn('status', [0, 1, 3,5])->get()->toArray();
+        $this->products = ProductActivityRuleProducts::whereIn('product_id', $product_ids)->whereIn('product_specification_value_to_product_id', $product_specification_value_to_product_ids)->whereIn('status', [0, 1, 3,5, 6])->get()->toArray();
         $this->activity_ids = lumen_array_column($this->products, 'activity_id');
         return $this->products;
     }
@@ -56,8 +56,8 @@ class Server
      * @return unknown
      */
     public function getRuningProducts($product_ids, $product_specification_value_to_product_ids){
-        if(empty($this->products)){
-            //return $this->products;
+        if(empty($product_specification_value_to_product_ids)){
+            return [];
         }
         $this->products = ProductActivityRuleProducts::join('product_activity as pa', function($join){
             $join->on('pa.id', '=', 'product_activity_rule_products.activity_id');
@@ -137,13 +137,19 @@ class Server
         }
         $activitys =  ProductActivityRuleProducts::join('product_activity_rules as par', function($join){
             $join->on('par.id', '=', 'product_activity_rule_products.activity_rules_id');
-        })->where('product_activity_rule_products.product_id', $request['id'])->where('product_activity_rule_products.status', 6)->where('product_activity_rule_products.rule_product_type', 1)->get()->toArray();
+        })->join('product_activity as pa', function($join){
+            $join->on('pa.id', '=', 'par.activity_id');
+        })->where('product_activity_rule_products.product_id', $request['id'])->where('product_activity_rule_products.status', 6)->where('product_activity_rule_products.rule_product_type', 1)->select([
+            'par.activity_id', 'par.get_limit', 'par.price', 'par.limit', 'par.total', 'par.status', 'par.store_id', 'par.id as activity_rule_id', 'product_activity_rule_products.product_id', 'product_activity_rule_products.product_specification_value_to_product_id', 'product_activity_rule_products.sales_storage', 'product_activity_rule_products.sales_volume', 'product_activity_rule_products.activity_type as type', 'pa.tag', 'pa.tag_img'
+        ])->groupBy('par.id')->get()->toArray();
         if(!empty($activitys)){
             $this->getActivityConfig(config('all_status.activity'));
             foreach ($activitys as $key=>$value){
-                //$activitys[$key]['rule_text'] = sprintf($this->config_rule_text[$value['type']], $value['total']);
+                $activitys[$key]['rule_text'] = sprintf($this->config_rule_text[$value['type']], $value['limit'], $value['get_limit'], $value['price']);
+                $activitys[$key]['tag_type'] = $this->config_tag_type[$value['type']];
             }
         }
+        $activitys = array_under_reset($activitys, 'activity_id', 2);
         $request['activitys'] = $activitys;
         return $request;
     }
@@ -203,7 +209,9 @@ class Server
             //当前活动开始时间 < 已有活动结束时间
             //当前活动结束时间 > 已有活动的开始时间
             if($this_activity['started_at'] <= $value['ended_at'] || $this_activity['ended_at'] >= $value['started_at']){
-                $coincide_activity_ids[] = $value['id'];
+                if($value['id'] != $this->id){
+                    $coincide_activity_ids[] = $value['id'];
+                }
             }
         }
         if(empty($coincide_activity_ids)){

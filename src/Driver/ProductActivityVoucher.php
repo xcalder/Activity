@@ -698,16 +698,21 @@ ETO;
         
         $rule_id = $request->input('rule_id');
         $activity_id = $request->input('id');
-        $result = ProductActivityRuleProducts::join('product_version as pv', function($join){
-            $join->on('pv.product_id', '=', 'product_activity_rule_products.product_id')->on('pv.product_specification_value_to_product_id', '=', 'product_activity_rule_products.product_specification_value_to_product_id');
-        })->where('product_activity_rule_products.activity_id', $activity_id)->where('product_activity_rule_products.activity_rules_id', $rule_id)->select(['pv.product_id', 'pv.title', 'pv.specification', 'pv.img', 'product_activity_rule_products.activity_id', 'product_activity_rule_products.activity_rules_id', 'product_activity_rule_products.product_specification_value_to_product_id'])->paginate(env('PAGE_LIMIT', 25))->toArray();
+        $result = ProductActivityRuleProducts::with(['productVersion' =>function($query){
+            $query->select(['id', 'product_specification_value_to_product_id', 'title', 'img', 'specification']);
+            $query->orderBy('id', 'desc');
+        }])->where('activity_id', $activity_id)->where('activity_rules_id', $rule_id)->orderBy('id', 'desc')->select(['activity_id', 'activity_rules_id', 'product_specification_value_to_product_id'])->paginate(env('PAGE_LIMIT', 25))->toArray();
         
         if(!empty($result['data'])){
             $data['status'] = true;
             $tools_service = new ToolsService();
             foreach ($result['data'] as $key=>$value){
-                $result['data'][$key]['specification'] = unserialize($value['specification']);
-                $result['data'][$key]['thumb_img'] = $tools_service->serviceResize($value['img'], $width, $height);
+                $value = array_merge($value, $value['product_version']);
+                unset($value['product_version']);
+                $value['specification'] = unserialize($value['specification']);
+                $value['thumb_img'] = $tools_service->serviceResize($value['img'], $width, $height);
+                
+                $result['data'][$key] = $value;
             }
         }
         

@@ -30,16 +30,20 @@ class ProductActivityRuleProducts extends Model
         return $this->hasMany('Activity\Models\ProductActivityRuleRoles', 'activity_rules_id', 'id');
     }
     
+    public function productVersion()
+    {
+        return $this->hasOne('App\Models\ProductVersion', 'product_specification_value_to_product_id', 'product_specification_value_to_product_id');
+    }
+    
     public function rolesPrice()
     {
         return $this->hasMany('Activity\Models\ProductActivityRuleRoles', 'product_specification_value_to_product_id', 'product_specification_value_to_product_id');
     }
     
     /**
-     * 禁止自动更新日期时间
-     * @return NULL
+     * 表明模型是否应该被打上时间戳
+     *
+     * @var bool
      */
-    public function getUpdatedAtColumn(){
-        return null;
-    }
+    public $timestamps = false;
 }
