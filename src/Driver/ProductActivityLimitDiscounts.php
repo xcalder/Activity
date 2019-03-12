@@ -183,7 +183,7 @@ class ProductActivityLimitDiscounts implements ActivityInterface
                         <form id="unjoined-form" action="$action_del_product_to_rule" method="post" enctype="multipart/form-data">
                             <input type="hidden" name="api_token" value="$api_token">
                             <input type="hidden" name="id" value="$id">
-                            <table class="table"><thead><tr><td><button class="btn btn-default btn-sm" type="submit">移出</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>活动数量</td><td>销量</td><td>角色名</td><td>角色价</td><td>商品名</td></tr></thead><tbody></tbody><tfoot></tfoot></table>
+                            <table class="table"><thead><tr><td><button class="btn btn-default btn-sm" type="submit">移出</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>活动数量</td><td>限购</td><td>销量</td><td>角色名</td><td>角色价</td><td>商品名</td></tr></thead><tbody></tbody><tfoot></tfoot></table>
                         </form>
                     </div>
                     <div role="tabpanel" class="tab-pane" id="not-joined">
@@ -191,7 +191,7 @@ class ProductActivityLimitDiscounts implements ActivityInterface
                             <input type="hidden" name="api_token" value="$api_token">
                             <input type="hidden" name="activity_id" value="$id">
                             <input type="hidden" name="id" value="$id">
-                            <table class="table"><thead><tr><td><button class="btn btn-default btn-sm" type="submit">加入</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>活动数量</td><td>角色名</td><td>角色价</td><td>商品名</td></tr></thead><tbody></tbody><tfoot id="search-product-list-page"></tfoot></table>
+                            <table class="table"><thead><tr><td><button class="btn btn-default btn-sm" type="submit">加入</button></td></tr><tr><td><input type="checkbox" class="select-all">全选</td><td>规格</td><td>活动数量</td><td>限购</td><td>角色名</td><td>角色价</td><td>商品名</td></tr></thead><tbody></tbody><tfoot id="search-product-list-page"></tfoot></table>
                         </form>
                     </div>
                   </div>

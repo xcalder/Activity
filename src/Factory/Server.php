@@ -4,6 +4,7 @@ namespace Activity;
 
 use Activity\Models\ProductActivity;
 use Activity\Models\ProductActivityRuleProducts;
+use Illuminate\Support\Facades\Auth;
 
 class Server
 {
@@ -135,22 +136,54 @@ class Server
         if(empty($request)){
             return $request;
         }
-        $activitys =  ProductActivityRuleProducts::join('product_activity_rules as par', function($join){
-            $join->on('par.id', '=', 'product_activity_rule_products.activity_rules_id');
-        })->join('product_activity as pa', function($join){
-            $join->on('pa.id', '=', 'par.activity_id');
+        //取当前用户角色
+        $user = Auth::user();
+        $role_ids = array_keys($user['roles'] ?? []);
+        
+        $activitys =  ProductActivityRuleProducts::with(['rule', 'productRoles'])->join('product_activity as pa', function($join){
+            $join->on('pa.id', '=', 'product_activity_rule_products.activity_id');
         })->where('product_activity_rule_products.product_id', $request['id'])->where('product_activity_rule_products.status', 6)->where('product_activity_rule_products.rule_product_type', 1)->select([
-            'par.activity_id', 'par.get_limit', 'par.price', 'par.limit', 'par.total', 'par.status', 'par.store_id', 'par.id as activity_rule_id', 'product_activity_rule_products.product_id', 'product_activity_rule_products.product_specification_value_to_product_id', 'product_activity_rule_products.sales_storage', 'product_activity_rule_products.sales_volume', 'product_activity_rule_products.activity_type as type', 'pa.tag', 'pa.tag_img'
-        ])->groupBy('par.id')->get()->toArray();
+            'product_activity_rule_products.activity_id', 'product_activity_rule_products.product_id', 'product_activity_rule_products.activity_rules_id', 'product_activity_rule_products.sales_limit', 'product_activity_rule_products.product_specification_value_to_product_id', 'product_activity_rule_products.sales_storage', 'product_activity_rule_products.sales_volume', 'product_activity_rule_products.activity_type as type', 'pa.tag', 'pa.tag_img', 'pa.started_at', 'pa.ended_at'
+        ])->get()->toArray();
+        
         if(!empty($activitys)){
             $this->getActivityConfig(config('all_status.activity'));
             foreach ($activitys as $key=>$value){
-                $activitys[$key]['rule_text'] = sprintf($this->config_rule_text[$value['type']], $value['limit'], $value['get_limit'], $value['price']);
-                $activitys[$key]['tag_type'] = $this->config_tag_type[$value['type']];
+                if(!empty($value['rule'])){
+                    $value = array_merge($value, $value['rule']);
+                    $value['rule_text'] = sprintf($this->config_rule_text[$value['type']], $value['limit'], $value['get_limit'], $value['price']);
+                }else{
+                    $value['limit'] = $value['sales_limit'];
+                    $value['get_limit'] = 0;
+                    $value['price'] = 0;
+                    if(!empty($value['limit'])){
+                        $value['rule_text'] = sprintf($this->config_rule_text[$value['type']], $value['limit'], $value['get_limit'], $value['price']);
+                    }else{
+                        $value['rule_text'] = '不限购';
+                    }
+                    
+                }
+                unset($value['rule']);
+                
+                $value['tag_type'] = $this->config_tag_type[$value['type']];
+                if(!empty($value['product_roles'])){
+                    $role_prices = [];
+                    foreach ($value['product_roles'] as $k=>$v){
+                        if(in_array($v['role_id'], $role_ids)){
+                            $role_prices[$v['product_specification_value_to_product_id']][] = $v['price'];
+                        }
+                    }
+                }
+                unset($value['product_roles']);
+                
+                $activitys[$key] = $value;
             }
         }
-        $activitys = array_under_reset($activitys, 'activity_id', 2);
-        $request['activitys'] = $activitys;
+        $activitys = array_under_reset($activitys, 'product_specification_value_to_product_id', 2);
+        foreach ($request['specification'] as $key=>$value){
+            $request['specification'][$key]->activitys = $activitys[$value->product_specification_value_to_product_id] ?? [];
+            $request['specification'][$key]->activity_role_price = formatPrice(min($role_prices[$value->product_specification_value_to_product_id] ?? [0]));
+        }
         return $request;
     }
     

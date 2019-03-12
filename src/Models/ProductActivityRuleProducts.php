@@ -30,6 +30,16 @@ class ProductActivityRuleProducts extends Model
         return $this->hasMany('Activity\Models\ProductActivityRuleRoles', 'activity_rules_id', 'id');
     }
     
+    public function productRoles()
+    {
+        return $this->hasMany('Activity\Models\ProductActivityRuleRoles', 'product_id', 'product_id');
+    }
+    
+    public function rule()
+    {
+        return $this->hasOne('Activity\Models\ProductActivityRules', 'id', 'activity_rule_id');
+    }
+    
     public function productVersion()
     {
         return $this->hasOne('App\Models\ProductVersion', 'product_specification_value_to_product_id', 'product_specification_value_to_product_id');
