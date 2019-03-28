@@ -37,7 +37,7 @@ class ProductActivityRuleProducts extends Model
     
     public function rule()
     {
-        return $this->hasOne('Activity\Models\ProductActivityRules', 'id', 'activity_rule_id');
+        return $this->hasOne('Activity\Models\ProductActivityRules', 'id', 'activity_rules_id');
     }
     
     public function productVersion()

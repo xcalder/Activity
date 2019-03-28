@@ -146,6 +146,39 @@ class Server
             'product_activity_rule_products.activity_id', 'product_activity_rule_products.product_id', 'product_activity_rule_products.activity_rules_id', 'product_activity_rule_products.sales_limit', 'product_activity_rule_products.product_specification_value_to_product_id', 'product_activity_rule_products.sales_storage', 'product_activity_rule_products.sales_volume', 'product_activity_rule_products.activity_type as type', 'pa.tag', 'pa.tag_img', 'pa.started_at', 'pa.ended_at'
         ])->get()->toArray();
         
+        $activitys = $this->doWithActivitys($activitys);
+        
+        foreach ($request['specification'] as $key=>$value){
+            $request['specification'][$key]->activitys = $activitys[$value->product_specification_value_to_product_id] ?? [];
+            $request['specification'][$key]->activity_role_price = formatPrice(min($role_prices[$value->product_specification_value_to_product_id] ?? [0]));
+        }
+        
+        return $request;
+    }
+    
+    public function checkoutActivityToCartProduct($request){
+        if(empty($request)){
+            return $request;
+        }
+        //取当前用户角色
+        $user = Auth::user();
+        $role_ids = array_keys($user['roles'] ?? []);
+        $product_ids = lumen_array_column($request, 'product_id');
+        
+        $activitys =  ProductActivityRuleProducts::with(['rule', 'productRoles'])->join('product_activity as pa', function($join){
+            $join->on('pa.id', '=', 'product_activity_rule_products.activity_id');
+        })->whereIn('product_activity_rule_products.product_id', $product_ids)->where('product_activity_rule_products.status', 6)->where('product_activity_rule_products.rule_product_type', 1)->select([
+            'product_activity_rule_products.activity_id', 'product_activity_rule_products.product_id', 'product_activity_rule_products.activity_rules_id', 'product_activity_rule_products.sales_limit', 'product_activity_rule_products.product_specification_value_to_product_id', 'product_activity_rule_products.sales_storage', 'product_activity_rule_products.sales_volume', 'product_activity_rule_products.activity_type as type', 'pa.tag', 'pa.tag_img', 'pa.started_at', 'pa.ended_at'
+        ])->get()->toArray();
+        
+        $activitys = $this->doWithActivitys($activitys);
+        foreach ($request as $key=>$value){
+            $request[$key]['activitys'] = $activitys[$value['product_specification_value_to_product_id']] ?? [];
+        }
+        return $request;
+    }
+    
+    private function doWithActivitys($activitys){
         if(!empty($activitys)){
             $this->getActivityConfig(config('all_status.activity'));
             foreach ($activitys as $key=>$value){
@@ -180,11 +213,8 @@ class Server
             }
         }
         $activitys = array_under_reset($activitys, 'product_specification_value_to_product_id', 2);
-        foreach ($request['specification'] as $key=>$value){
-            $request['specification'][$key]->activitys = $activitys[$value->product_specification_value_to_product_id] ?? [];
-            $request['specification'][$key]->activity_role_price = formatPrice(min($role_prices[$value->product_specification_value_to_product_id] ?? [0]));
-        }
-        return $request;
+        
+        return $activitys;
     }
     
     private function getActivityConfig($activity_config){
