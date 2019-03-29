@@ -5,6 +5,7 @@ namespace Activity;
 use Activity\Models\ProductActivity;
 use Activity\Models\ProductActivityRuleProducts;
 use Illuminate\Support\Facades\Auth;
+use Activity\Models\ProductActivityRules;
 
 class Server
 {
@@ -178,6 +179,11 @@ class Server
         return $request;
     }
     
+    /**
+     * 处理活动字段
+     * @param unknown $activitys
+     * @return unknown
+     */
     private function doWithActivitys($activitys){
         if(!empty($activitys)){
             $this->getActivityConfig(config('all_status.activity'));
@@ -186,7 +192,7 @@ class Server
                     $value = array_merge($value, $value['rule']);
                     $value['rule_text'] = sprintf($this->config_rule_text[$value['type']], $value['limit'], $value['get_limit'], $value['price']);
                 }else{
-                    $value['limit'] = $value['sales_limit'];
+                    $value['limit'] = $value['sales_limit'] ?? 0;
                     $value['get_limit'] = 0;
                     $value['price'] = 0;
                     if(!empty($value['limit'])){
@@ -215,6 +221,31 @@ class Server
         $activitys = array_under_reset($activitys, 'product_specification_value_to_product_id', 2);
         
         return $activitys;
+    }
+    
+    public function getStoreActivitys($result){
+        if(!is_array($result)){
+            $result = $result->toArray();
+        }
+        if(empty($result)){
+            return $result;
+        }
+        $store_ids = lumen_array_column($result, 'id');
+        $driver_config = config('all_status.activity.sales.order');
+        $types = lumen_array_column($driver_config, 'type');
+        
+        $activitys = ProductActivityRules::join('product_activity as pa', function($join){
+            $join->on('pa.id', '=', 'product_activity_rules.activity_id');
+        })->whereIn('pa.type', $types)->whereIn('product_activity_rules.store_id', $store_ids)->where('product_activity_rules.status', 6)->select(['pa.type', 'pa.tag', 'pa.started_at', 'pa.ended_at', 'product_activity_rules.id', 'product_activity_rules.activity_id', 'product_activity_rules.price', 'product_activity_rules.limit', 'product_activity_rules.get_limit', 'product_activity_rules.total', 'product_activity_rules.status', 'product_activity_rules.store_id', 'product_activity_rules.product_id'])->get()->toArray();
+        
+        $activitys = $this->doWithActivitys($activitys);
+        
+        $activitys = array_under_reset($activitys, 'store_id', 2);
+        
+        foreach ($result as $key=>$store_info){
+            $result[$key]['activitys'] = $activitys[$store_info['id']] ?? [];
+        }
+        return $result;
     }
     
     private function getActivityConfig($activity_config){

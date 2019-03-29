@@ -225,7 +225,7 @@ class OrderActivityFullDelivery implements ActivityInterface
      * 领取活动日志
      */
     public static function receiveActivityLog($request){
-        
+        return $request;
     }
     
     /**

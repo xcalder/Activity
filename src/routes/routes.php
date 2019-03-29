@@ -79,5 +79,15 @@ Route::group(['prefix' => 'api'], function($router){
             'uses' => 'Activity\IndexController@getActivityConfig',
             'description' => '取活动配置'
         ]);
+        $router->get('get_activity_log', [
+            'group' => 'activity',
+            'uses' => 'Activity\IndexController@getActivityLog',
+            'description' => '取活动日志(用户领取的代金券/红包之类)'
+        ]);
+        $router->post('add_activity_log', [
+            'group' => 'activity',
+            'uses' => 'Activity\IndexController@addActivityLog',
+            'description' => '添加活动日志(用户领取代金券/红包之类的操作)'
+        ]);
     });
 });

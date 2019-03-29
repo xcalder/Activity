@@ -131,6 +131,7 @@ class OrderActivityFullReduction implements ActivityInterface
      */
     public static function addActivityProduct($request){
         //订单满减 不涉及商品，些方法不用返回
+        return $request;
     }
     
     /**
@@ -138,13 +139,14 @@ class OrderActivityFullReduction implements ActivityInterface
      */
     public static function delActivityProduct($request){
         //订单满减 不涉及商品，些方法不用返回
+        return $request;
     }
     
     /**
      * 领取活动日志
      */
     public static function receiveActivityLog($request){
-        
+        return $request;
     }
     
     /**
@@ -334,7 +336,7 @@ ETO;
      * @param unknown $request
      */
     public static function getApplyForm($request){
-        
+        return $request;
     }
     
     /**

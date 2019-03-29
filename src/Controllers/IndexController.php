@@ -364,4 +364,20 @@ class IndexController extends BaseController
         }
         return $driver_config[$type];
     }
+    
+    /**
+     * 取活动日志列表
+     * @param Request $request
+     */
+    public function getActivityLog(Request $request){
+        
+    }
+    
+    /**
+     * 添加活动日志
+     * @param Request $request
+     */
+    public function addActivityLog(Request $request){
+        
+    }
 }
